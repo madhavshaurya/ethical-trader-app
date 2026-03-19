@@ -34,7 +34,7 @@ export function proxy(request: NextRequest) {
 
   // 1. GLOBAL SECURITY HEADERS (OWASP Best Practices)
   const securityHeaders = {
-    'Content-Security-Policy': "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://api.fontshare.com; font-src 'self' https://fonts.gstatic.com https://api.fontshare.com; img-src 'self' data: https:; connect-src 'self' https://integrate.api.nvidia.com https://api.binance.com wss://stream.binance.com:9443;",
+    'Content-Security-Policy': "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://api.fontshare.com; font-src 'self' https://fonts.gstatic.com https://api.fontshare.com https://cdn.fontshare.com; img-src 'self' data: https:; connect-src 'self' https://integrate.api.nvidia.com https://api.binance.com wss://stream.binance.com:9443 https://api.web3forms.com https://min-api.cryptocompare.com;",
     'Referrer-Policy': 'strict-origin-when-cross-origin',
     'X-Content-Type-Options': 'nosniff',
     'X-Frame-Options': 'DENY',
