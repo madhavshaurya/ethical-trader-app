@@ -1,6 +1,6 @@
 # TheEthicalTrader — Master the Markets with Integrity 🏛️📉🏆
 
-![Institutional Gold Branding](public/icon.png)
+![Institutional Gold Branding]
 
 An institutional-grade trading platform designed for the disciplined elite. **TheEthicalTrader** combines real-time market data, AI-driven trade intelligence, and high-fidelity ICT/SMC education into a single, seamless, obsidian-gold UX.
 
