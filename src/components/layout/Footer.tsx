@@ -29,10 +29,10 @@ export default function Footer() {
         <div>
           <div className="text-[0.62rem] font-bold tracking-[0.2em] uppercase text-stone mb-5">Platform</div>
           <ul className="list-none flex flex-col gap-3">
-            <li><Link href="#learn" className="text-[0.8rem] text-parchment hover:text-gold-light transition-colors">Education</Link></li>
-            <li><Link href="#terminal" className="text-[0.8rem] text-parchment hover:text-gold-light transition-colors">Terminal</Link></li>
-            <li><Link href="#ict" className="text-[0.8rem] text-parchment hover:text-gold-light transition-colors">ICT Concepts</Link></li>
-            <li><Link href="#pricing" className="text-[0.8rem] text-parchment hover:text-gold-light transition-colors">Pricing</Link></li>
+            <li><Link href="/#learn" className="text-[0.8rem] text-parchment hover:text-gold-light transition-colors">Education</Link></li>
+            <li><Link href="/#terminal" className="text-[0.8rem] text-parchment hover:text-gold-light transition-colors">Terminal</Link></li>
+            <li><Link href="/#ict" className="text-[0.8rem] text-parchment hover:text-gold-light transition-colors">ICT Concepts</Link></li>
+            <li><Link href="/#pricing" className="text-[0.8rem] text-parchment hover:text-gold-light transition-colors">Pricing</Link></li>
           </ul>
         </div>
         
