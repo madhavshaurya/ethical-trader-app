@@ -1,26 +1,117 @@
 @import "tailwindcss";
 
+@theme {
+  --color-void: #040305;
+  --color-obsidian: #080610;
+  --color-onyx: #0E0B18;
+  --color-carbon: #15111F;
+  --color-graphite: #1E1828;
+
+  --color-gold-deep: #8B6914;
+  --color-gold: #C9952A;
+  --color-gold-mid: #E2AE3C;
+  --color-gold-light: #F5CC6A;
+  --color-gold-pale: #FDE99A;
+  --color-gold-glow: rgba(201, 149, 42, 0.15);
+  --color-gold-trace: rgba(201, 149, 42, 0.06);
+
+  --color-amber: #B8621A;
+  --color-amber-mid: #D4782A;
+  --color-amber-lt: #F09048;
+  --color-copper: #C8834E;
+  --color-copper-lt: #E8A87A;
+  --color-amber-glow: rgba(184, 98, 26, 0.2);
+
+  --color-bull: #22C97A;
+  --color-bull-dim: rgba(34, 201, 122, 0.1);
+  --color-bear: #E04545;
+  --color-bear-dim: rgba(224, 69, 69, 0.1);
+
+  --color-ivory: #F2EAD8;
+  --color-cream: #D8CCBA;
+  --color-parchment: #A89880;
+  --color-stone: #6A5A48;
+  --color-ash: #3A2E28;
+
+  --color-border-subtle: rgba(201, 149, 42, 0.10);
+  --color-border-mid: rgba(201, 149, 42, 0.22);
+  --color-border-hot: rgba(201, 149, 42, 0.50);
+
+  --font-serif: 'Cormorant Garamond', Georgia, serif;
+  --font-sans: 'Cabinet Grotesk', system-ui, sans-serif;
+  --font-mono: 'Fira Code', monospace;
+}
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: var(--color-void);
+  --foreground: var(--color-cream);
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+@layer base {
+  body {
+    background-color: var(--background);
+    color: var(--foreground);
+    font-family: var(--font-sans);
+    overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* Grain texture overlay */
+  body::before {
+    content: '';
+    position: fixed; inset: 0; z-index: 9999;
+    pointer-events: none;
+    opacity: 0.035;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+  }
+
+  ::selection { background: var(--color-gold-deep); color: var(--color-gold-pale); }
+  ::-webkit-scrollbar { width: 2px; }
+  ::-webkit-scrollbar-track { background: var(--color-void); }
+  ::-webkit-scrollbar-thumb { background: var(--color-gold-deep); }
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+@layer utilities {
+  .hero-visual-frame {
+    background: var(--color-onyx);
+    border: 1px solid var(--color-border-subtle);
+    border-radius: 12px; overflow: hidden;
+    position: relative;
+  }
+  .hero-visual-frame::before {
+    content: '';
+    position: absolute; top: 0; left: 0; right: 0; height: 1px;
+    background: linear-gradient(90deg, transparent 0%, var(--color-gold) 40%, var(--color-amber) 60%, transparent 100%);
+  }
+  
+  .text-gradient {
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  
+  .bg-gradient-gold {
+    background: linear-gradient(135deg, var(--color-gold) 0%, var(--color-gold-mid) 100%);
+  }
+  
+  .bg-gradient-primary {
+    background: linear-gradient(135deg, var(--color-gold) 0%, var(--color-amber-mid) 100%);
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+@keyframes ticker-run {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
