@@ -1,4 +1,4 @@
-# TheEthicalTrader — Master the Markets with Integrity 🏛️📉🏆
+# TheEthicalTrader — Master the Markets
 
 An institutional-grade trading platform designed for the disciplined elite. **TheEthicalTrader** combines real-time market data, AI-driven trade intelligence, and high-fidelity ICT/SMC education into a single, seamless, obsidian-gold UX.
 
@@ -18,7 +18,7 @@ TheEthicalTrader is built on the foundation of **Transparency** and **Integrity*
 
 ## Marketplace Features
 
-### 1. The Terminal 📈
+### 1. The Terminal
 *   **Lightweight Charts:** Zero-lag institutional charting.
 *   **Order Flow & Delta:** Visualizing aggressive buyer/seller volume and hidden divergences.
 *   **Depth of Market (DOM):** Reading the bid/ask walls of the actual institutional order book.
