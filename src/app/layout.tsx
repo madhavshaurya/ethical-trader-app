@@ -2,6 +2,7 @@ import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import Starfield from '@/components/layout/Starfield';
 import ChatBot from '@/components/layout/ChatBot';
+import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Metadata } from 'next';
 import './globals.css';
 
@@ -75,6 +76,7 @@ export default function RootLayout({
         </div>
         <Footer />
         <ChatBot />
+        <SpeedInsights />
       </body>
     </html>
   );
