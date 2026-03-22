@@ -5,11 +5,11 @@ import { z } from 'zod';
 // Define strict schema for chat messages
 const MessageSchema = z.object({
   role: z.enum(['user', 'assistant', 'system']),
-  content: z.string().min(1).max(2000), // Prevent giant payloads
+  content: z.string().max(4000).optional(), // Increased limit and made optional for streaming
 });
 
 const ChatRequestSchema = z.object({
-  messages: z.array(MessageSchema).min(1).max(50), // Prevent context-stuffing attacks
+  messages: z.array(MessageSchema).min(1).max(100), // Increased to 100 for longer trading insights
 });
 
 export async function POST(req: Request) {
