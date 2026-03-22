@@ -11,8 +11,8 @@ export default function Pricing() {
         <h2 className="font-serif text-[clamp(2.2rem,4vw,3.8rem)] font-light leading-[1.1] text-ivory mb-5">
           Invest in Your <em className="italic text-gold-mid font-light">Trading Edge</em>
         </h2>
-        <p className="text-parchment max-w-[650px] mx-auto mb-14 leading-[1.8] text-[0.95rem]">
-          Avail the Forex and FNO Premium with best pricing, and enjoy the best possible trades with great Risk and rewards.
+        <p className="text-parchment max-w-[650px] mx-auto mb-14 leading-[1.8] text-[0.95rem] opacity-80">
+          Get access to premium Forex and FNO services at competitive prices, and capitalize on high-quality trade setups with a favorable risk-reward profile.
         </p>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto relative group pt-10">
