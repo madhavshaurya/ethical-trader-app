@@ -67,12 +67,35 @@ export default function ChatBot() {
         body: JSON.stringify({ messages: [...messages, userMessage] })
       });
 
-      const data = await response.json();
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        setMessages((prev) => [...prev, { role: 'assistant', content: '⚠️ Error: ' + (errorData.error || 'Failed to connect') }]);
+        setIsLoading(false);
+        return;
+      }
+
+      // Initialize empty assistant message for streaming
+      setMessages((prev) => [...prev, { role: 'assistant', content: '' }]);
       
-      if (data.error) {
-        setMessages((prev) => [...prev, { role: 'assistant', content: '⚠️ Error: ' + data.error }]);
-      } else {
-        setMessages((prev) => [...prev, { role: 'assistant', content: data.message }]);
+      const reader = response.body?.getReader();
+      const decoder = new TextDecoder();
+      let assistantContent = '';
+
+      if (reader) {
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          
+          const chunk = decoder.decode(value);
+          assistantContent += chunk;
+          
+          // Update the last message with the new chunk
+          setMessages((prev) => {
+            const newMessages = [...prev];
+            newMessages[newMessages.length - 1].content = assistantContent;
+            return newMessages;
+          });
+        }
       }
     } catch (err) {
       setMessages((prev) => [...prev, { role: 'assistant', content: '⚠️ Failed to connect. Please check your network or API key.' }]);

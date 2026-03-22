@@ -33,7 +33,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Service temporarily unavailable' }, { status: 503 });
     }
 
-    // Connect to NVIDIA NIM endpoint (OpenAI-compatible)
+    // Connect to NVIDIA NIM endpoint (OpenAI-compatible) with Streaming
     const response = await fetch('https://integrate.api.nvidia.com/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -50,34 +50,69 @@ export async function POST(req: Request) {
         max_tokens: 4096,
         temperature: 0.6,
         top_p: 0.95,
-        stream: false
+        stream: true // Enable streaming
       })
     });
 
-    const responseText = await response.text();
-    let data;
-    try {
-      data = JSON.parse(responseText);
-    } catch (e) {
-      // SECURE LOGGING: Log internally, but send a generic error to the client
-      console.error('NVIDIA Raw Response Error (Not JSON):', responseText);
-      return NextResponse.json({ 
-        error: 'High-intelligence engine encountered a processing error. Please try again shortly.' 
-      }, { status: 502 });
-    }
-
     if (!response.ok) {
-      console.error('NVIDIA NIM API Error:', data);
+      const errorData = await response.json().catch(() => ({}));
+      console.error('NVIDIA NIM API Error:', errorData);
       return NextResponse.json({ 
         error: 'Analysis engine is currently at capacity. Please try again in a few moments.' 
       }, { status: response.status });
     }
 
-    const aiMessage = data.choices?.[0]?.message?.content || 'Error: Could not retrieve response.';
-    
-    return NextResponse.json({ message: aiMessage });
+    // Handle the streaming response
+    const encoder = new TextEncoder();
+    const decoder = new TextDecoder();
+
+    const stream = new ReadableStream({
+      async start(controller) {
+        if (!response.body) {
+          controller.close();
+          return;
+        }
+
+        const reader = response.body.getReader();
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+
+          const chunk = decoder.decode(value);
+          const lines = chunk.split('\n');
+
+          for (const line of lines) {
+            if (line.startsWith('data: ')) {
+              const data = line.slice(6);
+              if (data === '[DONE]') {
+                controller.close();
+                return;
+              }
+              try {
+                const parsed = JSON.parse(data);
+                const content = parsed.choices?.[0]?.delta?.content;
+                if (content) {
+                  controller.enqueue(encoder.encode(content));
+                }
+              } catch (e) {
+                // Ignore parse errors for partial chunks
+              }
+            }
+          }
+        }
+        controller.close();
+      }
+    });
+
+    return new Response(stream, {
+      headers: {
+        'Content-Type': 'text/plain; charset=utf-8',
+        'Cache-Control': 'no-cache',
+        'Connection': 'keep-alive',
+      },
+    });
+
   } catch (error: any) {
-    // SECURE LOGGING: Mask internal errors
     console.error('Chat API Internal Error:', error);
     return NextResponse.json({ error: 'Internal gateway error' }, { status: 500 });
   }
