@@ -25,7 +25,7 @@ const INITIAL_STOCKS = [
 
 const INITIAL_FOREX = [
   { sym: 'EURUSD', name: 'Euro / U.S. Dollar' },
-  { sym: 'XAUUSDT', name: 'Gold Spot' },
+  { sym: 'XAUUSD', name: 'Gold Spot' },
   { sym: 'BTCUSDT', name: 'Bitcoin' },
 ];
 
@@ -64,7 +64,7 @@ export default function WatchlistWidget({ activeSymbol }: { activeSymbol: string
           const last = parseFloat(d.lastPrice);
           const chgPct = parseFloat(d.priceChangePercent);
           const prev = last / (1 + chgPct / 100);
-          updates['XAUUSDT'] = { sym: 'XAUUSDT', name: 'Gold Spot', last, chg: last - prev, chgPct };
+          updates['XAUUSD'] = { sym: 'XAUUSD', name: 'Gold Spot', last, chg: last - prev, chgPct };
         }
         
         if (indRes.ok) {

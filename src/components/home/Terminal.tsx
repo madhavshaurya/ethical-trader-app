@@ -26,7 +26,7 @@ export default function Terminal() {
   const ASSETS = [
     { label: 'BTC/USD', value: 'BTC-USD', isCrypto: true },
     { label: 'NIFTY 50', value: 'NIFTY 50', isCrypto: false },
-    { label: 'XAU/USD', value: 'XAU-USD', isCrypto: false },
+    { label: 'XAU/USD', value: 'XAUUSD', isCrypto: false },
     { label: 'EUR/USD', value: 'EUR-USD', isCrypto: false },
     { label: 'SPX', value: 'SPX', isCrypto: false }
   ];

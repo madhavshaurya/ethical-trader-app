@@ -138,7 +138,7 @@ export default function Hero() {
             Master ICT/SMC concepts, live order flow, cumulative delta & AI-powered signals — built on transparency, discipline, and real edge.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 items-center justify-center lg:justify-start mb-14">
-            <Button href="/live-terminal/XAUUSDT" variant="primary" className="w-full sm:w-auto" target="_blank" rel="noopener noreferrer">Enter Terminal &nbsp;→</Button>
+            <Button href="/live-terminal/XAUUSD" variant="primary" className="w-full sm:w-auto" target="_blank" rel="noopener noreferrer">Enter Terminal &nbsp;→</Button>
             <Button href="#learn" variant="secondary" className="w-full sm:w-auto">Start Learning</Button>
           </div>
           <div className="grid grid-cols-2 md:grid-cols-3 gap-6 md:gap-8 pt-10 border-t border-border-subtle">
