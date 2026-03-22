@@ -78,10 +78,13 @@ export default function ScreenerPanel() {
     return { text: 'Neutral', color: 'text-stone' };
   };
 
-  const filteredData = data.filter(d => 
-    d.name.toLowerCase().includes(search.toLowerCase()) || 
-    (d.description && d.description.toLowerCase().includes(search.toLowerCase()))
-  );
+  const filteredData = data.filter(d => {
+    const symbolText = (d.name || '').toString().toLowerCase();
+    const descriptionText = (d.description || '').toString().toLowerCase();
+    const searchText = (search || '').toLowerCase();
+    
+    return symbolText.includes(searchText) || descriptionText.includes(searchText);
+  });
 
   const [isIndicatorsOpen, setIsIndicatorsOpen] = useState(false);
   const [activeFilter, setActiveFilter] = useState('Volume');
