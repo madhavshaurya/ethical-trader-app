@@ -14,7 +14,7 @@ export async function GET(request: Request) {
   const baseUrl = isFutures ? 'https://fapi.binance.com/fapi/v1' : 'https://api.binance.com/api/v3';
   
   try {
-    const res = await fetch(`${baseUrl}/klines?symbol=${symbol}&interval=${interval}&limit=${limit}`, {
+    const res = await fetch(`${baseUrl}/klines?symbol=${encodeURIComponent(symbol)}&interval=${encodeURIComponent(interval)}&limit=${limit}`, {
       cache: 'no-store'
     });
     

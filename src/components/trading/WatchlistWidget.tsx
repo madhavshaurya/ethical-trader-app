@@ -1,7 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
-import Link from 'next/link';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 
 interface WatchlistData {
@@ -129,7 +128,7 @@ export default function WatchlistWidget({ activeSymbol }: { activeSymbol: string
     fetchPrices();
     const interval = setInterval(fetchPrices, 3000);
     return () => { isMounted = false; clearInterval(interval); };
-  }, []);
+  }, [activeSymbol]);
 
   const formatPrice = (num: number, sym: string) => {
     if (!num) return '—';
@@ -174,7 +173,7 @@ export default function WatchlistWidget({ activeSymbol }: { activeSymbol: string
                 <div 
                   key={item.sym}
                   onClick={() => router.push(`/live-terminal/${item.sym}`)}
-                  className={`flex items-center justify-between px-4 py-1.5 cursor-pointer textxs transition-colors ${
+                  className={`flex items-center justify-between px-4 py-1.5 cursor-pointer text-xs transition-colors ${
                     isActive ? 'bg-[#2B354D] text-white' : 'hover:bg-[#2A2B2E] text-[#D1D4DC]'
                   }`}
                 >

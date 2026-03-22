@@ -20,7 +20,7 @@ export async function GET(request: Request) {
   }
 
   try {
-    const res = await fetch(`https://query2.finance.yahoo.com/v7/finance/spark?symbols=${symbols}`, { 
+    const res = await fetch(`https://query2.finance.yahoo.com/v7/finance/spark?symbols=${encodeURIComponent(symbols)}`, { 
       headers: { 
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36' 
       },

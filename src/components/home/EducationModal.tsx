@@ -2,7 +2,6 @@
 
 import { useEducationStore } from '@/lib/educationStore';
 import { LESSONS, COLOR_MAP } from '@/components/home/Education';
-import { useEffect } from 'react';
 
 export default function EducationModal() {
   const { activeLessonId, setActiveLessonId } = useEducationStore();

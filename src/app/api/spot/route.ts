@@ -6,7 +6,7 @@ export async function GET() {
     
     // Fetch last 2 daily candles concurrently to compute exact session changes
     const results = await Promise.all(symbols.map(async (sym) => {
-      const res = await fetch(`https://api.binance.com/api/v3/klines?symbol=${sym}&interval=1d&limit=2`, { 
+      const res = await fetch(`https://api.binance.com/api/v3/klines?symbol=${encodeURIComponent(sym)}&interval=1d&limit=2`, { 
         cache: 'no-store' 
       });
       

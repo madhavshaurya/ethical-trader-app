@@ -3,18 +3,35 @@ import { NextResponse } from 'next/server';
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const market = body.market || 'crypto'; // 'crypto', 'india', 'america'
+    const market = body.market || 'crypto'; 
     const sortBy = body.sortBy || 'volume';
     const sortOrder = body.sortOrder || 'desc';
-    const limit = body.limit || 100;
+    const search = body.search || '';
     
-    // Determine the exact TradingView scanner route based on market grouping
+    // Determine scanner route
     const tvMarketId = market === 'crypto' ? 'crypto' : market === 'india' ? 'india' : market === 'forex' ? 'forex' : 'america';
     const url = `https://scanner.tradingview.com/${tvMarketId}/scan`;
 
     // Base filters
-    const filters: any[] = [{ left: "name", operation: "nempty" }];
+    const filters: any[] = [];
     
+    // Add exchange filters
+    if (market === 'india') {
+      filters.push({ left: "exchange", operation: "in_range", right: ["NSE", "BSE"] });
+    } else if (market === 'crypto') {
+      filters.push({ left: "exchange", operation: "equal", right: "BINANCE" });
+    }
+
+    // If search is provided, we use TradingView's filter engine instead of just text
+    // This is more reliable for finding specific tickers like MRF
+    if (search) {
+      filters.push({
+        left: "name",
+        operation: "match",
+        right: search.toUpperCase()
+      });
+    }
+
     let reqColumns = [
         "name",             
         "close",            
@@ -26,17 +43,10 @@ export async function POST(request: Request) {
         "type"              
     ];
 
-    if (market === 'india' || market === 'america') {
-      // Show all stocks without volume or primary restrictions
-    } else if (market === 'forex') {
-      // Forex does not support market_cap_basic on TradingView
-      reqColumns[4] = "name"; // Fill with dummy name so length maps back correctly
-    } else if (market === 'crypto') {
-      // Ensure we only show Binance listed trading pairs for reliable cross-route fetching
-      filters.push({ left: "exchange", operation: "equal", right: "BINANCE" });
+    if (market === 'forex') {
+      reqColumns[4] = "name"; 
     }
 
-    // Advanced TradingView Payload simulating Python TradingView-Screener reverse-engineering
     const payload = {
       filter: filters,
       options: { lang: "en" },
@@ -44,7 +54,7 @@ export async function POST(request: Request) {
       symbols: { query: { types: [] }, tickers: [] },
       columns: reqColumns,
       sort: { sortBy, sortOrder },
-      range: [0, 500]
+      range: [0, 100] // Small range is fine now because the filter will find the exact match
     };
 
     const res = await fetch(url, {
@@ -60,9 +70,12 @@ export async function POST(request: Request) {
 
     const data = await res.json();
     
-    // Map compact data arrays precisely back into frontend-friendly objects
+    if (!data || !data.data) {
+       return NextResponse.json({ totalCount: 0, data: [] });
+    }
+
     const results = data.data.map((item: any) => ({
-      providerSymbol: item.s, // e.g., "BINANCE:BTCUSDT" or "NSE:RELIANCE"
+      providerSymbol: item.s,
       name: item.d[0],
       close: item.d[1],
       changePct: item.d[2],
@@ -76,6 +89,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ totalCount: data.totalCount, data: results });
 
   } catch (error) {
+    console.error("Screener API error:", error);
     return NextResponse.json({ error: 'Failed to proxy scanner request' }, { status: 500 });
   }
 }

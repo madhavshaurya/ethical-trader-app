@@ -59,7 +59,7 @@ export default function LiveTerminalClient({ initialSymbol }: LiveTerminalClient
   }, [isResizing]);
 
   return (
-    <div ref={containerRef} className="pt-[96px] h-screen bg-[#0E0E0E] flex overflow-hidden font-sans select-none">
+    <div ref={containerRef} className="pt-[96px] h-screen bg-[#0E0E0E] flex overflow-hidden font-sans">
       
       {/* Left/Center Viewport: Chart + Screener with Resizer */}
       <div className="flex-1 flex flex-col min-w-0 border-r border-[#2A2B2E]">

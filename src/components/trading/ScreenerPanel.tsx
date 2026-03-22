@@ -29,7 +29,7 @@ export default function ScreenerPanel() {
         const res = await fetch('/api/screener', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ market: activeTab, limit: 200 })
+          body: JSON.stringify({ market: activeTab, search, limit: 200 })
         });
         if (res.ok) {
           const json = await res.json();
@@ -50,7 +50,7 @@ export default function ScreenerPanel() {
       isMounted = false;
       clearInterval(interval);
     };
-  }, [activeTab]);
+  }, [activeTab, search]);
 
   const formatNumber = (num: number) => {
     if (!num) return '—';
@@ -124,7 +124,7 @@ export default function ScreenerPanel() {
            <div className="flex items-center h-full gap-4">
             {[
               { id: 'crypto', label: 'Crypto' },
-              { id: 'india', label: 'India NSE' },
+              { id: 'india', label: 'India (BSE+NSE)' },
               { id: 'america', label: 'America' },
               { id: 'forex', label: 'Forex' }
             ].map(tab => (

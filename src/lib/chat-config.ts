@@ -19,7 +19,7 @@ NEW PRICING STRUCTURE:
 - Forex Premium: $149/month. Advanced forex strategies and institutional tools.
 - FNO Premium: $55/month. Specialized tools for Futures & Options traders.
 - Combined Pro (Best Value): $185/month (approximately ₹15,000/month). The ultimate package.
-  - Tagline: "Avail the Forex and FNO Premium with best pricing, and enjoy the best possible trades with great Risk and rewards."
+  - Tagline: "Get Forex and FNO Premium together at our best price and aim for consistent, risk-managed returns."
 
 - Telegram Community: Join at ${SITE_CONFIG.links.telegram} for live signals and hotroom discussion.
 - Commitment: We are transparent, disciplined, and education-first. No fluff, no fake theory.`;

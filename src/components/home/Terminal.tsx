@@ -65,7 +65,7 @@ export default function Terminal() {
       clearInterval(dInterval);
       clearInterval(domInterval);
     };
-  }, [tickerPrice]);
+  }, []); // tickerPrice removed from dependencies to stop effect cycle
 
   useEffect(() => {
     if (tradeModalOpen) {
@@ -189,7 +189,7 @@ export default function Terminal() {
                 if (res.ok) {
                     const d = await res.json();
                     if (d && d.length > 0) {
-                        const k = d[0];
+                        const k = d[d.length - 1]; // Use latest candle instead of oldest
                         const candle = {
                           time: (k[0] / 1000) as import('lightweight-charts').Time,
                           open: parseFloat(k[1]),

@@ -65,8 +65,10 @@ export async function GET(request: Request) {
     const timestamps = result.timestamp;
     const quote = result.indicators.quote[0];
     
+    const limitNum = parseInt(searchParams.get('limit') || '200');
+
     // Format into Binance-style kline array: [time_ms, open, high, low, close, volume]
-    const klines = timestamps.map((t: number, index: number) => {
+    let klines = timestamps.map((t: number, index: number) => {
       // Yahoo returns timestamps in seconds. Multiply by 1000 for ms layout.
       return [
         t * 1000, 
@@ -77,6 +79,10 @@ export async function GET(request: Request) {
         quote.volume[index] ?? 0
       ];
     }).filter((k: any[]) => k[1] !== null && k[1] !== 0); // Remove null entries (e.g. market internal pauses)
+
+    if (limitNum) {
+      klines = klines.slice(-limitNum);
+    }
 
     return NextResponse.json(klines);
 

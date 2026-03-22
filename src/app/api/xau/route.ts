@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server';
 export async function GET() {
   try {
     // Fetch last 2 daily candles to compute exact session change rather than 24h rolling
-    const klinesRes = await fetch('https://fapi.binance.com/fapi/v1/klines?symbol=XAUUSDT&interval=1d&limit=2', { 
+    const klinesRes = await fetch(`https://fapi.binance.com/fapi/v1/klines?symbol=${encodeURIComponent('XAUUSDT')}&interval=1d&limit=2`, { 
       cache: 'no-store' 
     });
     
