@@ -280,6 +280,8 @@ export default function Terminal() {
                   <div className="flex items-center gap-2">
                     <Link 
                      href={`/live-terminal/${activeAsset.value === 'BTC-USD' ? 'BTCUSDT' : activeAsset.value}`}
+                     target="_blank"
+                     rel="noopener noreferrer"
                      className="bg-onyx hover:bg-gold-trace text-ivory border border-border-subtle hover:border-gold-mid text-[0.6rem] md:text-[0.65rem] font-bold px-3 md:px-4 py-1.5 rounded uppercase tracking-wider transition-all"
                     >
                       View Chart
