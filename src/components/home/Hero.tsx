@@ -16,7 +16,27 @@ export default function Hero() {
     const dInterval = setInterval(() => {
       setDelta(prev => prev + Math.floor((Math.random() - 0.45) * 150));
     }, 3500);
-    return () => clearInterval(dInterval);
+
+    const fetchXauPrice = async () => {
+      try {
+        const res = await fetch('/api/xau');
+        if (res.ok) {
+          const data = await res.json();
+          setPrice(parseFloat(data.lastPrice).toLocaleString(undefined, { minimumFractionDigits: 2 }));
+          setChange((parseFloat(data.priceChangePercent) >= 0 ? '+' : '') + data.priceChangePercent + '%');
+          setIsUp(parseFloat(data.priceChangePercent) >= 0);
+        }
+      } catch (err) {
+        console.error('Hero XAU price fetch failed:', err);
+      }
+    };
+    fetchXauPrice();
+    const pInterval = setInterval(fetchXauPrice, 30000);
+
+    return () => {
+      clearInterval(dInterval);
+      clearInterval(pInterval);
+    };
   }, []);
 
   useEffect(() => {
