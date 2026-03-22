@@ -35,9 +35,24 @@ export async function GET(request: Request) {
   
   let ySymbol = SYMBOL_MAP[symbol] || symbol;
   
+  // Clean prefix if present (e.g. 'THINKMARKETS:EURJPY' -> 'EURJPY')
+  const baseSymbol = symbol.includes(':') ? symbol.split(':')[1] : symbol;
+
   // Dynamically attach Indian market suffixes if prefix is provided
-  if (symbol.startsWith('NSE:')) ySymbol = symbol.split(':')[1] + '.NS';
-  if (symbol.startsWith('BSE:')) ySymbol = symbol.split(':')[1] + '.BO';
+  if (symbol.startsWith('NSE:')) {
+    ySymbol = baseSymbol + '.NS';
+  } else if (symbol.startsWith('BSE:')) {
+    ySymbol = baseSymbol + '.BO';
+  } else if (!SYMBOL_MAP[symbol]) {
+    // Check if it looks like a Forex pair (e.g. EURJPY, GBPUSD)
+    // Most forex pairs are 6 chars or like EUR-USD
+    const cleanForex = baseSymbol.replace('-', '').replace('/', '');
+    if (cleanForex.length === 6 && !cleanForex.includes('.')) {
+      ySymbol = cleanForex + '=X';
+    } else {
+      ySymbol = baseSymbol;
+    }
+  }
   
   const mapConfig = INTERVAL_MAP[interval] || { yInterval: '15m', range: '1mo' };
 

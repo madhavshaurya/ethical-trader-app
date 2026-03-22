@@ -206,7 +206,7 @@ export default function WatchlistWidget({ activeSymbol }: { activeSymbol: string
   const activeIsUp = activeData.chgPct >= 0;
 
   return (
-    <div className="w-[340px] md:w-[380px] bg-[#131722] border-l border-[#2A2B2E] flex flex-col shrink-0 h-full overflow-hidden text-[#D1D4DC] font-sans relative">
+    <div className="w-full md:w-[340px] lg:w-[380px] bg-[#131722] border-l border-[#2A2B2E] flex flex-col shrink-0 h-full overflow-hidden text-[#D1D4DC] font-sans relative">
       
       {/* Watchlist Selection Dropdown */}
       {isWlDropdownOpen && (

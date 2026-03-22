@@ -12,7 +12,7 @@ export default function ChartWidget({ symbol, panelHeight }: { symbol: string, p
   const [change, setChange] = useState(0);
 
   // Clean symbol extraction (e.g., 'NSE:JPPOWER' -> 'JPPOWER')
-  const cleanSymbol = symbol.includes(':') ? symbol.split(':')[1] : symbol;
+  const cleanSymbol = symbol.includes(':') ? symbol.split(':')[1] || symbol : symbol;
 
   // Handle Resize whenever panelHeight (from the draggable resizer) changes
   useEffect(() => {
@@ -88,7 +88,19 @@ export default function ChartWidget({ symbol, panelHeight }: { symbol: string, p
             response = await fetch(`/api/yahoo-klines?symbol=${symbol}&interval=${tf}`);
         }
         
-        if (!response.ok) throw new Error('Symbol not found');
+        if (!response.ok) {
+          // If the specific symbol fails, try one more time with a clean base symbol if it had a prefix
+          if (symbol.includes(':')) {
+            const fallbackRes = await fetch(`/api/yahoo-klines?symbol=${cleanSymbol}&interval=${tf}`);
+            if (fallbackRes.ok) {
+              response = fallbackRes;
+            } else {
+              throw new Error('Symbol not found');
+            }
+          } else {
+            throw new Error('Symbol not found');
+          }
+        }
         const klines = await response.json();
         
         const formattedData = klines.map((k: any) => ({
@@ -159,6 +171,8 @@ export default function ChartWidget({ symbol, panelHeight }: { symbol: string, p
       } catch (err) {
         console.error('Chart Data Error:', err);
         setLoading(false);
+        // Set an empty state so the chart doesn't just hang on the previous symbol's data
+        if (series) series.setData([]);
       }
     };
 

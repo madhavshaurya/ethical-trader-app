@@ -37,10 +37,15 @@ export async function POST(request: Request) {
         "close",            
         "change",           
         "volume",           
-        "market_cap_basic", 
-        "Recommend.All",    
-        "description",      
-        "type"              
+        "type",             
+        "RSI",               // 8
+        "MACD.macd",         // 9
+        "MACD.signal",       // 10
+        "BB.upper",          // 11
+        "BB.lower",          // 12
+        "EMA20",             // 13
+        "EMA50",             // 14
+        "VWAP"               // 15
     ];
 
     if (market === 'forex') {
@@ -84,6 +89,14 @@ export async function POST(request: Request) {
       rating: item.d[5],
       description: item.d[6],
       type: item.d[7],
+      rsi: item.d[8],
+      macd: item.d[9],
+      macdSignal: item.d[10],
+      bbUpper: item.d[11],
+      bbLower: item.d[12],
+      ema20: item.d[13],
+      ema50: item.d[14],
+      vwap: item.d[15]
     }));
 
     return NextResponse.json({ totalCount: data.totalCount, data: results });
