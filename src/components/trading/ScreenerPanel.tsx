@@ -24,7 +24,7 @@ interface ScreenerData {
 }
 
 export default function ScreenerPanel() {
-  const [activeTab, setActiveTab] = useState<'crypto' | 'india' | 'america' | 'forex'>('crypto');
+  const [activeTab, setActiveTab] = useState<'india' | 'america' | 'forex' | 'crypto'>('india');
   const [search, setSearch] = useState('');
   const [data, setData] = useState<ScreenerData[]>([]);
   const [loading, setLoading] = useState(true);
@@ -134,10 +134,10 @@ export default function ScreenerPanel() {
            
            <div className="flex items-center h-full gap-4 overflow-x-auto scrollbar-hide shrink-0 pb-1 md:pb-0">
             {[
-              { id: 'crypto', label: 'Crypto' },
-              { id: 'india', label: 'India (BSE+NSE)' },
-              { id: 'america', label: 'America' },
-              { id: 'forex', label: 'Forex' }
+              { id: 'india', label: 'Indian Market' },
+              { id: 'america', label: 'US Market' },
+              { id: 'forex', label: 'Forex' },
+              { id: 'crypto', label: 'Crypto' }
             ].map(tab => (
               <button
                 key={tab.id}

@@ -12,7 +12,7 @@ export default function Pricing() {
           Invest in Your <em className="italic text-gold-mid font-light">Trading Edge</em>
         </h2>
         <p className="text-parchment max-w-[650px] mx-auto mb-14 leading-[1.8] text-[0.95rem] opacity-80">
-          Get access to premium Forex and FNO services at competitive prices, and capitalize on high-quality trade setups with a favorable risk-reward profile.
+          Gain exclusive access to high-probability trade setups, institutional-grade tools, and expert-led market strategies tailored for serious traders.
         </p>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto relative group pt-10">
@@ -26,7 +26,7 @@ export default function Pricing() {
               <span className="text-[0.7rem] text-stone mt-8 ml-1 italic">/mo</span>
             </div>
             <ul className="list-none mb-10 text-left w-full space-y-3">
-              {['All Forex Pairs', 'SMC/ICT Signals', 'Order Flow Tools', 'Live Terminal'].map((f, i) => (
+              {['Forex Premium Signals', 'Bespoke Market Guidance', 'Crypto Premium Access'].map((f, i) => (
                 <li key={i} className="text-[0.8rem] text-parchment opacity-70 flex items-center gap-3">
                   <span className="text-gold-mid text-[0.6rem]">▸</span> {f}
                 </li>
@@ -52,9 +52,17 @@ export default function Pricing() {
               <div className="text-[0.7rem] text-stone mt-2 italic font-mono uppercase tracking-[0.1em]">~ ₹15,000 per month</div>
             </div>
             <ul className="list-none mb-10 text-left w-full space-y-3">
-              {['Full Forex Access', 'All FNO Options', 'AI Signal Engine', 'Priority Mentorship', 'Community Pro Hub'].map((f, i) => (
-                <li key={i} className="text-[0.85rem] text-ivory flex items-center gap-3">
-                  <span className="text-gold-mid text-[0.8rem]">▸</span> {f}
+              {[
+                'Premium Forex Signals', 
+                'Elite FNO Options', 
+                'Institutional Stock & Index Ops', 
+                'Advanced Crypto Options',
+                'AI Signal Engine', 
+                'Priority Mentorship', 
+                'Elite Community Pro Hub'
+              ].map((f, i) => (
+                <li key={i} className="text-[0.82rem] text-ivory flex items-start gap-3">
+                  <span className="text-gold-mid text-[0.8rem] mt-1">▸</span> {f}
                 </li>
               ))}
             </ul>
@@ -72,7 +80,7 @@ export default function Pricing() {
               <span className="text-[0.7rem] text-stone mt-8 ml-1 italic">/mo</span>
             </div>
             <ul className="list-none mb-10 text-left w-full space-y-3">
-              {['Nifty/BankNifty FNO', 'Options Orderflow', 'Delta Analytics', 'Basics to Advanced'].map((f, i) => (
+              {['Index Options Mastery', 'Elite Stock Options', 'Bespoke Market Guidance'].map((f, i) => (
                 <li key={i} className="text-[0.8rem] text-parchment opacity-70 flex items-center gap-3">
                   <span className="text-gold-mid text-[0.6rem]">▸</span> {f}
                 </li>

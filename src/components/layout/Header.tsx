@@ -86,7 +86,7 @@ export default function Header() {
             {['Learn', 'Terminal', 'ICT / SMC', 'Pricing'].map((item) => (
               <li key={item}>
                 <Link 
-                  href={`/#${item === 'ICT / SMC' ? 'ict' : item.toLowerCase().replace(/\s|\//g, '')}`} 
+                  href={`/#${item === 'ICT / SMC' ? 'ict' : item.toLowerCase().replace(/\s|\//g, '')}`}
                   className="text-[0.7rem] font-bold tracking-[0.15em] uppercase text-stone hover:text-gold transition-colors"
                   target={undefined}
                   rel={undefined}

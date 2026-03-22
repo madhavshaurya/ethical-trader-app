@@ -7,6 +7,7 @@ import { createChart, CandlestickSeries } from 'lightweight-charts';
 export default function Hero() {
   const chartContainerRef = useRef<HTMLDivElement>(null);
   const [price, setPrice] = useState('64,230.50');
+  const [activeAsset, setActiveAsset] = useState({ label: 'XAU/USD', value: 'XAU-USD', isCrypto: false });
   const [change, setChange] = useState('+1.12%');
   const [isUp, setIsUp] = useState(true);
   const [delta, setDelta] = useState(4821);
@@ -137,7 +138,7 @@ export default function Hero() {
             Master ICT/SMC concepts, live order flow, cumulative delta & AI-powered signals — built on transparency, discipline, and real edge.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 items-center justify-center lg:justify-start mb-14">
-            <Button href="/live-terminal/BTCUSDT" variant="primary" className="w-full sm:w-auto" target="_blank" rel="noopener noreferrer">Enter Terminal &nbsp;→</Button>
+            <Button href="/live-terminal/XAUUSDT" variant="primary" className="w-full sm:w-auto" target="_blank" rel="noopener noreferrer">Enter Terminal &nbsp;→</Button>
             <Button href="#learn" variant="secondary" className="w-full sm:w-auto">Start Learning</Button>
           </div>
           <div className="grid grid-cols-2 md:grid-cols-3 gap-6 md:gap-8 pt-10 border-t border-border-subtle">
