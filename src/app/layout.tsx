@@ -2,6 +2,7 @@ import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import Starfield from '@/components/layout/Starfield';
 import ChatBot from '@/components/layout/ChatBot';
+import EducationModal from '@/components/home/EducationModal';
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Metadata } from 'next';
 import './globals.css';
@@ -63,6 +64,7 @@ export default function RootLayout({
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;0,700;1,300;1,400;1,600;1,700&family=Cabinet+Grotesk:wght@300;400;500;700;800&family=Fira+Code:wght@300;400;500&display=swap" rel="stylesheet" />
         <link href="https://api.fontshare.com/v2/css?f[]=cabinet-grotesk@300,400,500,700,800&display=swap" rel="stylesheet" />
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
@@ -75,6 +77,7 @@ export default function RootLayout({
           {children}
         </div>
         <Footer />
+        <EducationModal />
         <ChatBot />
         <SpeedInsights />
       </body>

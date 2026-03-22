@@ -9,22 +9,33 @@ import { SITE_CONFIG } from '@/lib/constants';
 export default function Terminal() {
   const [mounted, setMounted] = useState(false);
   const [tradeModalOpen, setTradeModalOpen] = useState(false);
-  const [tradePair, setTradePair] = useState('EUR / USD');
-  const [tradeDir, setTradeDir] = useState<'buy' | 'sell'>('buy');
-  const [tickerPrice, setTickerPrice] = useState('64,230.50');
-  const [tickerChange, setTickerChange] = useState('+1.12%');
+  const [activeAsset, setActiveAsset] = useState({ label: 'BTC/USD', value: 'BTC-USD', isCrypto: true });
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+
+  const [tickerPrice, setTickerPrice] = useState('0.00');
+  const [tickerChange, setTickerChange] = useState('0.00%');
   const [tickerIsUp, setTickerIsUp] = useState(true);
   const [deltaValues, setDeltaValues] = useState<number[]>([]);
   const [domValues, setDomValues] = useState<{bid:number, ask:number, p:number}[]>([]);
   const [activeSignal, setActiveSignal] = useState(0);
+  const [tradePair, setTradePair] = useState('EUR / USD');
+  const [tradeDir, setTradeDir] = useState<'buy' | 'sell'>('buy');
 
   const chartRef = useRef<HTMLDivElement>(null);
-  
+
+  const ASSETS = [
+    { label: 'BTC/USD', value: 'BTC-USD', isCrypto: true },
+    { label: 'NIFTY 50', value: 'NIFTY 50', isCrypto: false },
+    { label: 'XAU/USD', value: 'XAU-USD', isCrypto: false },
+    { label: 'EUR/USD', value: 'EUR-USD', isCrypto: false },
+    { label: 'SPX', value: 'SPX', isCrypto: false }
+  ];
+
   useEffect(() => {
     setMounted(true);
     setDeltaValues(Array.from({length: 40}, () => Math.random() * 100));
     setDomValues(Array.from({length: 8}, (_, i) => ({ 
-      p: 64230.50 + (i - 4) * 0.5, 
+      p: 0 + (i - 4) * 0.5, 
       bid: Math.floor(Math.random() * 80 + 20), 
       ask: Math.floor(Math.random() * 80 + 20) 
     })));
@@ -32,16 +43,14 @@ export default function Terminal() {
     const signalInterval = setInterval(() => {
       setActiveSignal(prev => (prev + 1) % 2);
     }, 8000);
-    return () => clearInterval(signalInterval);
-  }, []);
 
-  useEffect(() => {
     const dInterval = setInterval(() => {
       setDeltaValues(Array.from({length: 40}, () => Math.random() * 100));
     }, 3800);
+
     const domInterval = setInterval(() => {
       setDomValues(prev => {
-        const center = parseFloat(tickerPrice.replace(/,/g, '')) || 64000;
+        const center = parseFloat(tickerPrice.replace(/,/g, '')) || 0;
         return prev.map((d, i) => ({
           ...d,
           p: center + (i - 4) * 0.5,
@@ -50,8 +59,13 @@ export default function Terminal() {
         }));
       });
     }, 800);
-    return () => { clearInterval(dInterval); clearInterval(domInterval); };
-  }, []);
+
+    return () => {
+      clearInterval(signalInterval);
+      clearInterval(dInterval);
+      clearInterval(domInterval);
+    };
+  }, [tickerPrice]);
 
   useEffect(() => {
     if (tradeModalOpen) {
@@ -94,7 +108,6 @@ export default function Terminal() {
       wickDownColor: '#E04545',
     });
 
-    // Add EMA Line like in the image
     // @ts-ignore
     const emaSeries = chart.addSeries(LineSeries, {
       color: '#c9952a',
@@ -103,10 +116,28 @@ export default function Terminal() {
       lastValueVisible: false,
     });
 
+    let socket: any = null;
+    let pollInterval: any = null;
+
     const fetchData = async () => {
       try {
-        const response = await fetch('https://api.binance.com/api/v3/klines?symbol=BTCUSDT&interval=15m&limit=100');
+        setTickerPrice('...');
+        let fetchUrl = '';
+        if (activeAsset.isCrypto) {
+            const sym = activeAsset.value === 'XAU-USD' ? 'XAUUSDT' : 'BTCUSDT';
+            fetchUrl = `/api/klines?symbol=${sym}&interval=15m&limit=100`;
+        } else {
+            fetchUrl = `/api/yahoo-klines?symbol=${encodeURIComponent(activeAsset.value)}&interval=15m`;
+        }
+
+        const response = await fetch(fetchUrl);
         const klines = await response.json();
+
+        if (!Array.isArray(klines) || klines.length === 0) {
+            console.error('No kline data returned for:', activeAsset.value);
+            return;
+        }
+
         const data = klines.map((k: any) => ({
           time: (k[0] / 1000) as import('lightweight-charts').Time,
           open: parseFloat(k[1]),
@@ -117,7 +148,6 @@ export default function Terminal() {
         
         series.setData(data);
         
-        // Calculate a simple EMA
         let ema = data[0].close;
         const k = 2 / (21 + 1);
         const emaData = data.map((d: any) => {
@@ -130,31 +160,57 @@ export default function Terminal() {
 
         const last = data[data.length - 1];
         const first = data[0];
-        setTickerPrice(last.close.toLocaleString(undefined, { minimumFractionDigits: 2 }));
+        setTickerPrice(last.close.toLocaleString(undefined, { 
+          minimumFractionDigits: activeAsset.value.includes('EUR') ? 5 : 2,
+          maximumFractionDigits: activeAsset.value.includes('EUR') ? 5 : 2
+        }));
         const diff = ((last.close - first.close) / first.close * 100);
         setTickerChange((diff >= 0 ? '+' : '') + diff.toFixed(2) + '%');
         setTickerIsUp(diff >= 0);
+
+        if (activeAsset.value === 'BTC-USD') {
+            socket = new WebSocket('wss://stream.binance.com:9443/ws/btcusdt@kline_15m');
+            socket.onmessage = (event: any) => {
+              const msg = JSON.parse(event.data);
+              const k = msg.k;
+              const candle = {
+                time: (k.t / 1000) as import('lightweight-charts').Time,
+                open: parseFloat(k.o),
+                high: parseFloat(k.h),
+                low: parseFloat(k.l),
+                close: parseFloat(k.c),
+              };
+              series.update(candle);
+              setTickerPrice(candle.close.toLocaleString(undefined, { minimumFractionDigits: 2 }));
+            };
+        } else {
+            pollInterval = setInterval(async () => {
+                const res = await fetch(fetchUrl + '&limit=1');
+                if (res.ok) {
+                    const d = await res.json();
+                    if (d && d.length > 0) {
+                        const k = d[0];
+                        const candle = {
+                          time: (k[0] / 1000) as import('lightweight-charts').Time,
+                          open: parseFloat(k[1]),
+                          high: parseFloat(k[2]),
+                          low: parseFloat(k[3]),
+                          close: parseFloat(k[4]),
+                        };
+                        series.update(candle);
+                        setTickerPrice(candle.close.toLocaleString(undefined, { 
+                            minimumFractionDigits: activeAsset.value.includes('EUR') ? 5 : 2 
+                        }));
+                    }
+                }
+            }, 5000);
+        }
       } catch (e) {
         console.error('Terminal chart fetch failed', e);
       }
     };
 
     fetchData();
-
-    const socket = new WebSocket('wss://stream.binance.com:9443/ws/btcusdt@kline_15m');
-    socket.onmessage = (event) => {
-      const msg = JSON.parse(event.data);
-      const k = msg.k;
-      const candle = {
-        time: (k.t / 1000) as import('lightweight-charts').Time,
-        open: parseFloat(k.o),
-        high: parseFloat(k.h),
-        low: parseFloat(k.l),
-        close: parseFloat(k.c),
-      };
-      series.update(candle);
-      setTickerPrice(candle.close.toLocaleString(undefined, { minimumFractionDigits: 2 }));
-    };
 
     const handleResize = () => {
       if (chartRef.current) {
@@ -164,11 +220,13 @@ export default function Terminal() {
     window.addEventListener('resize', handleResize);
 
     return () => {
-      socket.close();
+      if (socket) socket.close();
+      if (pollInterval) clearInterval(pollInterval);
       window.removeEventListener('resize', handleResize);
       chart.remove();
     };
-  }, [mounted]);
+  }, [mounted, activeAsset]);
+
   return (
     <>
       <section className="bg-void border-y border-border-subtle z-1 relative" id="terminal">
@@ -181,16 +239,34 @@ export default function Terminal() {
         </h2>
 
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_380px] gap-6 md:gap-8 mt-10">
-          {/* Left Panel */}
           <div className="flex flex-col gap-6 md:gap-8">
             <div className="bg-onyx border border-border-subtle rounded-xl overflow-hidden shadow-2xl">
               <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between py-4 px-5 md:px-6 border-b border-border-subtle bg-[#110E18] gap-4 sm:gap-0">
                 <div className="flex items-center gap-4">
-                  <div className="flex items-center gap-2 bg-black/40 border border-border-subtle rounded px-2.5 py-1 text-[0.65rem] md:text-[0.7rem] text-ivory font-mono">
-                    BTC/USD <span className="opacity-40 text-[0.6rem]">▼</span>
+                  <div className="relative">
+                    <button 
+                      onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                      className="flex items-center gap-2 bg-black/40 border border-border-subtle hover:border-gold-mid transition-colors rounded px-2.5 py-1 text-[0.65rem] md:text-[0.7rem] text-ivory font-mono group"
+                    >
+                      {activeAsset.label} <span className={`opacity-40 text-[0.6rem] transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`}>▼</span>
+                    </button>
+                    
+                    {isDropdownOpen && (
+                      <div className="absolute top-full left-0 mt-1 w-32 bg-[#1A1625] border border-border-subtle rounded shadow-2xl z-[100] py-1 overflow-hidden">
+                        {ASSETS.map(asset => (
+                          <div 
+                            key={asset.value}
+                            onClick={() => { setActiveAsset(asset); setIsDropdownOpen(false); }}
+                            className={`px-3 py-2 text-[0.7rem] font-mono cursor-pointer hover:bg-gold-trace hover:text-gold-light transition-colors ${activeAsset.value === asset.value ? 'bg-black/40 text-gold-light' : 'text-stone'}`}
+                          >
+                            {asset.label}
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
                   <div className="flex items-center gap-2 text-[0.55rem] md:text-[0.6rem] font-bold tracking-[0.15em] text-bull uppercase">
-                    <span className="w-1.5 h-1.5 rounded-full bg-bull" />
+                    <span className="w-1.5 h-1.5 rounded-full bg-bull animate-pulse" />
                     Live
                   </div>
                 </div>
@@ -203,7 +279,7 @@ export default function Terminal() {
                   </div>
                   <div className="flex items-center gap-2">
                     <Link 
-                     href="/chart/BTC-USD"
+                     href={`/live-terminal/${activeAsset.value === 'BTC-USD' ? 'BTCUSDT' : activeAsset.value}`}
                      className="bg-onyx hover:bg-gold-trace text-ivory border border-border-subtle hover:border-gold-mid text-[0.6rem] md:text-[0.65rem] font-bold px-3 md:px-4 py-1.5 rounded uppercase tracking-wider transition-all"
                     >
                       View Chart
@@ -238,7 +314,6 @@ export default function Terminal() {
             </div>
           </div>
 
-          {/* Right Panel */}
           <div className="flex flex-col gap-6 md:gap-8">
             <div className="bg-onyx border border-border-subtle rounded-xl overflow-hidden shadow-xl">
               <div className="flex items-center justify-between py-3 px-5 border-b border-border-subtle bg-black/20">
@@ -296,7 +371,6 @@ export default function Terminal() {
         </div>
       </section>
 
-      {/* Trade Modal Overlay */}
       {tradeModalOpen && (
         <div 
           className="fixed inset-0 z-[9990] flex items-center justify-center p-4 bg-void/90 backdrop-blur-md transition-opacity animate-[fade-up_0.2s_ease_out]"
@@ -349,43 +423,22 @@ export default function Terminal() {
                   <input type="number" defaultValue="0.1" step="0.01" className="w-full bg-void border border-border-subtle rounded-md px-3 py-2.5 text-[0.85rem] text-ivory outline-none focus:border-gold-mid font-mono" />
                 </div>
                 <div>
-                  <label className="block text-[0.6rem] uppercase tracking-[0.12em] text-stone mb-1.5">Order Type</label>
+                  <label className="block text-[0.6rem] uppercase tracking-[0.12em] text-stone mb-1.5">Type</label>
                   <select className="w-full bg-void border border-border-subtle rounded-md px-3 py-2.5 text-[0.85rem] text-ivory outline-none focus:border-gold-mid">
                     <option>Market</option>
                     <option>Limit</option>
-                    <option>Stop</option>
                   </select>
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-3 mb-6">
-                <div>
-                  <label className="block text-[0.6rem] uppercase tracking-[0.12em] text-stone mb-1.5">Stop Loss</label>
-                  <input type="number" defaultValue="20" className="w-full bg-[rgba(224,69,69,0.05)] border border-[rgba(224,69,69,0.2)] rounded-md px-3 py-2.5 text-[0.85rem] text-bear outline-none focus:border-bear font-mono" />
-                </div>
-                <div>
-                  <label className="block text-[0.6rem] uppercase tracking-[0.12em] text-stone mb-1.5">Take Profit</label>
-                  <input type="number" defaultValue="60" className="w-full bg-[rgba(34,201,122,0.05)] border border-[rgba(34,201,122,0.2)] rounded-md px-3 py-2.5 text-[0.85rem] text-bull outline-none focus:border-bull font-mono" />
-                </div>
-              </div>
             </div>
             
-            <div className="bg-void p-5 text-[0.7rem] border-y border-border-subtle">
-              <div className="flex justify-between mb-2 pb-2 border-b border-border-subtle/50"><span className="text-stone">Entry</span><span className="font-mono text-cream">1.08742</span></div>
-              <div className="flex justify-between mb-2 pb-2 border-b border-border-subtle/50"><span className="text-stone">Stop Loss</span><span className="font-mono text-bear">1.08542</span></div>
-              <div className="flex justify-between mb-2 pb-2 border-b border-border-subtle/50"><span className="text-stone">Take Profit</span><span className="font-mono text-bull">1.09342</span></div>
-              <div className="flex justify-between"><span className="text-stone">Risk / Reward</span><span className="font-mono text-gold-light">1 : 3.0</span></div>
-            </div>
-            
-            <div className="p-6 custom-scrollbar">
+            <div className="p-6">
               <button 
-                onClick={() => { setTradeModalOpen(false); alert('Trade execution not connected'); }}
+                onClick={() => setTradeModalOpen(false)}
                 className={`w-full py-3.5 rounded-sm font-sans text-[0.75rem] font-bold tracking-[0.08em] uppercase text-[#0A0505] transition-transform hover:-translate-y-0.5 ${tradeDir === 'buy' ? 'bg-bull hover:shadow-[0_4px_25px_rgba(34,201,122,0.3)]' : 'bg-bear hover:shadow-[0_4px_25px_rgba(224,69,69,0.3)]'}`}
               >
                 EXECUTE {tradeDir} ORDER
               </button>
-              <div className="text-[0.6rem] text-center text-ash mt-4 italic">
-                ⚠ Paper trading mode. Connect broker for live execution.
-              </div>
             </div>
           </div>
         </div>
