@@ -101,7 +101,10 @@ export default function ChartWidget({ symbol, panelHeight }: { symbol: string, p
             throw new Error('Symbol not found');
           }
         }
-        const klines = await response.json();
+        let klines = await response.json();
+        
+        // If Yahoo data, it might need translation or merging with live price
+        const isYahooData = !isCrypto || (response.url && response.url.includes('yahoo'));
         
         const formattedData = klines.map((k: any) => ({
           time: (k[0] / 1000) as import('lightweight-charts').Time,
@@ -110,6 +113,22 @@ export default function ChartWidget({ symbol, panelHeight }: { symbol: string, p
           low: parseFloat(k[3]),
           close: parseFloat(k[4]),
         }));
+
+        // INJECT LATEST CANDLE: Yahoo historical data often lags by 1 candle.
+        // If we have a price already, and it's newer than the last candle, update/append.
+        if (isYahooData && formattedData.length > 0) {
+           const lastK = formattedData[formattedData.length - 1];
+           // If current price is different from last close, it's a 'live' candle
+           const liveCandle = {
+              time: (Math.floor(Date.now() / 1000) - (Math.floor(Date.now() / 1000) % 60)) as import('lightweight-charts').Time,
+              open: lastK.close,
+              high: Math.max(lastK.close, price || lastK.close),
+              low: Math.min(lastK.close, price || lastK.close),
+              close: price || lastK.close
+           };
+           // Only push if time is significantly newer or update current
+           if (price > 0) series.update(liveCandle);
+        }
         
         series.setData(formattedData);
         chart.timeScale().fitContent();
@@ -126,6 +145,7 @@ export default function ChartWidget({ symbol, panelHeight }: { symbol: string, p
           // and to poll Yahoo Finance which lacks public websockets
           const pollInterval = window.setInterval(async () => {
             try {
+              // Priority 1: Check the global XAU/Spot data first if available in ticker/parent
               const fetchUrl = isCrypto 
                 ? `/api/klines?symbol=${binanceSymbol}&interval=${tf}&limit=1`
                 : `/api/yahoo-klines?symbol=${symbol}&interval=${tf}&limit=1`;
@@ -134,7 +154,7 @@ export default function ChartWidget({ symbol, panelHeight }: { symbol: string, p
               if (res.ok) {
                 const data = await res.json();
                 if (data && data.length > 0) {
-                  const k = data[0];
+                  const k = data[data.length - 1]; // ALWAYS use the very last item returned
                   const candle = {
                     time: (k[0] / 1000) as import('lightweight-charts').Time,
                     open: parseFloat(k[1]),
@@ -147,7 +167,7 @@ export default function ChartWidget({ symbol, panelHeight }: { symbol: string, p
                 }
               }
             } catch (e) {}
-          }, 3000);
+          }, 4000);
           socket = { close: () => window.clearInterval(pollInterval) } as any;
         } else {
           socket = new WebSocket(`${wsUrl}/${binanceSymbol.toLowerCase()}@kline_${tf}`);

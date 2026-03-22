@@ -47,7 +47,8 @@ export default function Ticker() {
         const xauRes = await fetch('/api/xau');
         if (xauRes.ok) {
           const xauData = await xauRes.json();
-          if (xauData.symbol === 'XAUUSDT') {
+          // Support both Binance and Yahoo naming conventions from fallback
+          if (xauData.symbol.includes('XAU')) {
              bufferRef.current['XAUUSDT'] = { c: parseFloat(xauData.lastPrice), p: xauData.priceChangePercent };
           }
         }
