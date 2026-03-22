@@ -45,8 +45,8 @@ export default function Header() {
                 key={item}
                 href={`/#${item === 'ICT / SMC' ? 'ict' : item.toLowerCase().replace(/\s|\//g, '')}`}
                 onClick={() => setIsMenuOpen(false)}
-                target={item === 'Terminal' ? '_blank' : undefined}
-                rel={item === 'Terminal' ? 'noopener noreferrer' : undefined}
+                target={idx === 100 ? '_blank' : undefined}
+                rel={idx === 100 ? 'noopener noreferrer' : undefined}
                 className={`group flex flex-col items-center transition-all duration-700 ${isMenuOpen ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0'}`}
                 style={{ transitionDelay: `${idx * 100}ms` }}
               >
@@ -88,8 +88,8 @@ export default function Header() {
                 <Link 
                   href={`/#${item === 'ICT / SMC' ? 'ict' : item.toLowerCase().replace(/\s|\//g, '')}`} 
                   className="text-[0.7rem] font-bold tracking-[0.15em] uppercase text-stone hover:text-gold transition-colors"
-                  target={item === 'Terminal' ? '_blank' : undefined}
-                  rel={item === 'Terminal' ? 'noopener noreferrer' : undefined}
+                  target={undefined}
+                  rel={undefined}
                 >
                   {item}
                 </Link>
