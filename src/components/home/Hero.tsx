@@ -10,6 +10,7 @@ export default function Hero() {
   const [change, setChange] = useState('+1.12%');
   const [isUp, setIsUp] = useState(true);
   const [delta, setDelta] = useState(4821);
+  const [activeInterval, setActiveInterval] = useState('1h');
 
   useEffect(() => {
     const dInterval = setInterval(() => {
@@ -49,7 +50,8 @@ export default function Hero() {
 
     const fetchData = async () => {
       try {
-        const response = await fetch('https://api.binance.com/api/v3/klines?symbol=BTCUSDT&interval=1h&limit=100');
+        const binanceInterval = activeInterval.toLowerCase();
+        const response = await fetch(`/api/klines?symbol=XAUUSDT&interval=${binanceInterval}&limit=100`);
         const klines = await response.json();
         
         const formattedData = klines.map((k: any) => ({
@@ -61,10 +63,7 @@ export default function Hero() {
         }));
 
         series.setData(formattedData);
-        if (!chartContainerRef.current?.getAttribute('data-loaded')) {
-          chart.timeScale().fitContent();
-          chartContainerRef.current?.setAttribute('data-loaded', 'true');
-        }
+        chart.timeScale().fitContent();
       } catch (err) {
         console.error('Binance fetch failed:', err);
       }
@@ -73,7 +72,7 @@ export default function Hero() {
     fetchData();
 
     // WebSocket for live updates
-    const socket = new WebSocket('wss://stream.binance.com:9443/ws/btcusdt@kline_1h');
+    const socket = new WebSocket(`wss://stream.binance.com:9443/ws/xauusdt@kline_${activeInterval.toLowerCase()}`);
     socket.onmessage = (event) => {
       const msg = JSON.parse(event.data);
       const k = msg.k;
@@ -85,8 +84,6 @@ export default function Hero() {
         close: parseFloat(k.c),
       };
       series.update(candle);
-      
-      // Also update the price labels
       setPrice(candle.close.toLocaleString(undefined, { minimumFractionDigits: 2 }));
     };
 
@@ -102,7 +99,7 @@ export default function Hero() {
       window.removeEventListener('resize', handleResize);
       chart.remove();
     };
-  }, []);
+  }, [activeInterval]);
 
   return (
     <section>
@@ -120,7 +117,7 @@ export default function Hero() {
             Master ICT/SMC concepts, live order flow, cumulative delta & AI-powered signals — built on transparency, discipline, and real edge.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 items-center justify-center lg:justify-start mb-14">
-            <Button href="#terminal" variant="primary" className="w-full sm:w-auto">Enter Terminal &nbsp;→</Button>
+            <Button href="/live-terminal/BTCUSDT" variant="primary" className="w-full sm:w-auto" target="_blank" rel="noopener noreferrer">Enter Terminal &nbsp;→</Button>
             <Button href="#learn" variant="secondary" className="w-full sm:w-auto">Start Learning</Button>
           </div>
           <div className="grid grid-cols-2 md:grid-cols-3 gap-6 md:gap-8 pt-10 border-t border-border-subtle">
@@ -140,7 +137,7 @@ export default function Hero() {
         </div>
 
         <div className="relative animate-[fade-up_0.7s_ease_forwards] [animation-delay:0.15s] opacity-0 mt-8 lg:mt-0">
-          <div className="absolute z-10 bg-[rgba(14,11,24,0.92)] border border-border-mid rounded-lg px-[10px] md:px-[13px] py-[7px] md:py-[9px] backdrop-blur-md -top-[10px] md:-top-[14px] -left-[10px] md:-left-[14px]">
+          <div className="absolute z-10 bg-[rgba(14,11,24,0.92)] border border-border-mid rounded-lg px-[10px] md:px-[13px] py-[7px] md:py-[9px] backdrop-blur-md -top-[10px] md:-top-[25px] -left-[10px] md:-left-[20px] shadow-2xl">
             <div className="text-[0.5rem] md:text-[0.55rem] uppercase tracking-[0.15em] text-stone mb-[3px]">Cum. Delta</div>
             <div className={`font-mono text-[0.8rem] md:text-[0.95rem] font-normal transition-colors ${delta >= 0 ? 'text-bull' : 'text-bear'}`}>
               {delta >= 0 ? '+' : ''}{delta.toLocaleString()}
@@ -148,14 +145,17 @@ export default function Hero() {
           </div>
 
           <div className="hero-visual-frame bg-onyx/40 border border-border-subtle rounded-xl overflow-hidden backdrop-blur-sm shadow-2xl">
-            <div className="flex items-center justify-between py-3 md:py-[14px] px-4 md:px-5 border-b border-border-subtle">
-              <div>
-                <div className="font-serif text-[0.9rem] md:text-[1.1rem] font-semibold text-ivory">BTC / USD</div>
+            <div className="flex items-center justify-between py-3 md:py-[14px] px-4 md:px-5 border-b border-border-subtle relative min-h-[60px]">
+              <div className="w-[80px]" /> {/* Spacer for header balance */}
+
+              <div className="absolute left-1/2 -translate-x-1/2 flex flex-col items-center">
+                <div className="font-serif text-[0.9rem] md:text-[1.1rem] font-semibold text-ivory tracking-tight">XAU / USD</div>
+                <div className="flex items-center gap-1.5 text-[0.45rem] md:text-[0.5rem] font-bold tracking-[0.2em] text-bull uppercase mt-1">
+                  <span className="w-1 h-1 rounded-full bg-bull animate-[live-pulse_1.4s_infinite]" />
+                  Live Stream
+                </div>
               </div>
-              <div className="flex items-center gap-1.5 text-[0.55rem] md:text-[0.6rem] font-bold tracking-[0.18em] text-bull uppercase">
-                <span className="w-1.5 h-1.5 rounded-full bg-bull animate-[live-pulse_1.4s_infinite]" />
-                Live
-              </div>
+
               <div className="text-right">
                 <div className="font-mono text-sm md:text-base font-normal text-ivory">{price}</div>
                 <div className={`text-[0.6rem] md:text-[0.7rem] font-mono mt-[2px] ${isUp ? 'text-bull' : 'text-bear'}`}>
@@ -167,9 +167,20 @@ export default function Hero() {
               <div ref={chartContainerRef} className="w-full h-[180px] md:h-[250px]" />
             </div>
             <div className="flex px-2.5 py-1.5 gap-0.5 border-t border-border-subtle bg-onyx/50 overflow-x-auto no-scrollbar">
-              {['1m', '5m', '15m', '1H', '4H', 'D'].map((tf, i) => (
-                <button key={tf} className={`px-[7px] md:px-[9px] py-[2px] md:py-[3px] border-none bg-transparent font-mono text-[0.6rem] md:text-[0.65rem] rounded-[3px] transition-all hover:bg-gold-trace hover:text-gold-light ${i === 2 ? 'text-gold-light bg-gold-trace' : 'text-stone'}`}>
-                  {tf}
+              {[
+                { label: '1m', value: '1m' },
+                { label: '5m', value: '5m' },
+                { label: '15m', value: '15m' },
+                { label: '1H', value: '1h' },
+                { label: '4H', value: '4h' },
+                { label: 'D', value: '1d' }
+              ].map((tf) => (
+                <button 
+                  key={tf.value} 
+                  onClick={() => setActiveInterval(tf.value)}
+                  className={`px-[7px] md:px-[9px] py-[2px] md:py-[3px] border-none bg-transparent font-mono text-[0.6rem] md:text-[0.65rem] rounded-[3px] transition-all hover:bg-gold-trace hover:text-gold-light ${activeInterval === tf.value ? 'text-gold-light bg-gold-trace' : 'text-stone'}`}
+                >
+                  {tf.label}
                 </button>
               ))}
             </div>

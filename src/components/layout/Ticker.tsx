@@ -24,6 +24,8 @@ export default function Ticker() {
     { sym: 'NQ1!', p: '18,340.50', change: '+0.3', isUp: true, raw: 18340.50 },
     { sym: 'EUR/USD', p: '1.0942', change: '-0.05', isUp: false, raw: 1.0942 },
     { sym: 'XAU/USD', p: '2,345.10', change: '+0.15', isUp: true, raw: 2345.10 },
+    { sym: 'NIFTY 50', p: '23,114.50', change: '+0.00', isUp: true, raw: 23114.50 },
+    { sym: 'SENSEX', p: '74,532.96', change: '+0.00', isUp: true, raw: 74532.96 },
     { sym: 'DXY', p: '104.20', change: '-0.1', isUp: false, raw: 104.20 },
   ]);
 
@@ -32,31 +34,39 @@ export default function Ticker() {
   const bufferRef = useRef<{ [key: string]: { c: number, p: string } }>({});
 
   useEffect(() => {
-    // Initial fetch to seed the data
-    const fetchInitial = async () => {
+    const fetchLivePrices = async () => {
       try {
-        const res = await fetch('https://min-api.cryptocompare.com/data/pricemulti?fsyms=BTC,ETH,SOL&tsyms=USD');
-        const prices = await res.json();
-        const updated = dataRef.current.map(item => {
-          if (item.sym === 'BTC/USD') return { ...item, p: prices.BTC.USD.toLocaleString(), raw: prices.BTC.USD };
-          if (item.sym === 'ETH/USD') return { ...item, p: prices.ETH.USD.toLocaleString(), raw: prices.ETH.USD };
-          if (item.sym === 'SOL/USD') return { ...item, p: prices.SOL.USD.toLocaleString(), raw: prices.SOL.USD };
-          return item;
-        });
-        setData(updated);
-        dataRef.current = updated;
+        const spotRes = await fetch('/api/spot');
+        if (spotRes.ok) {
+          const data = await spotRes.json();
+          data.forEach((d: any) => {
+             bufferRef.current[d.symbol] = { c: parseFloat(d.lastPrice), p: d.priceChangePercent };
+          });
+        }
+        
+        const xauRes = await fetch('/api/xau');
+        if (xauRes.ok) {
+          const xauData = await xauRes.json();
+          if (xauData.symbol === 'XAUUSDT') {
+             bufferRef.current['XAUUSDT'] = { c: parseFloat(xauData.lastPrice), p: xauData.priceChangePercent };
+          }
+        }
+
+        const indicesRes = await fetch('/api/indices');
+        if (indicesRes.ok) {
+          const indicesData = await indicesRes.json();
+          indicesData.forEach((d: any) => {
+             bufferRef.current[d.symbol] = { c: parseFloat(d.lastPrice), p: d.priceChangePercent };
+          });
+        }
       } catch (e) {}
     };
-    fetchInitial();
 
-    // Binance WebSocket Combined Stream
-    const symbols = ['btcusdt', 'ethusdt', 'solusdt', 'eurusdt'];
-    const socket = new WebSocket(`wss://stream.binance.com:9443/ws/${symbols.map(s => `${s}@ticker`).join('/')}`);
+    // Initial fetch to seed the data immediately
+    fetchLivePrices();
 
-    socket.onmessage = (event) => {
-      const msg = JSON.parse(event.data);
-      bufferRef.current[msg.s] = { c: parseFloat(msg.c), p: msg.P };
-    };
+    // Polling interval to fetch live prices from our backend proxy (bypasses browser adblockers completely)
+    const pollingInterval = setInterval(fetchLivePrices, 3000);
 
     // Throttle updates to once per second
     const interval = setInterval(() => {
@@ -70,6 +80,9 @@ export default function Ticker() {
         else if (item.sym === 'ETH/USD') priceData = buffer['ETHUSDT'] || priceData;
         else if (item.sym === 'SOL/USD') priceData = buffer['SOLUSDT'] || priceData;
         else if (item.sym === 'EUR/USD') { priceData = buffer['EURUSDT'] || priceData; decimals = 5; }
+        else if (item.sym === 'XAU/USD') priceData = buffer['XAUUSDT'] || priceData;
+        else if (item.sym === 'NIFTY 50') priceData = buffer['NIFTY 50'] || priceData;
+        else if (item.sym === 'SENSEX') priceData = buffer['SENSEX'] || priceData;
 
         if (priceData.c !== -1) {
           const displayP = decimals === 5 ? priceData.c.toFixed(5) : priceData.c.toLocaleString(undefined, { minimumFractionDigits: 2 });
@@ -78,7 +91,7 @@ export default function Ticker() {
         }
 
         // Random walk for indices (simulating live feel for non-crypto)
-        if (['ES1!', 'NQ1!', 'XAU/USD', 'DXY'].includes(item.sym)) {
+        if (['ES1!', 'NQ1!', 'DXY'].includes(item.sym)) {
           const walk = (Math.random() - 0.5) * (item.raw * 0.00004);
           const nextP = item.raw + walk;
           const currentChg = parseFloat(item.change);
@@ -95,7 +108,7 @@ export default function Ticker() {
     }, 1000);
 
     return () => {
-      socket.close();
+      clearInterval(pollingInterval);
       clearInterval(interval);
     };
   }, []);

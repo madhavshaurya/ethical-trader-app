@@ -6,12 +6,7 @@ export default function Footer() {
       <div className="max-w-[1440px] mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-[2fr_1fr_1fr_1fr] gap-12 mb-16">
         <div className="max-w-[320px]">
           <Link href="/" className="flex items-center gap-3.5 no-underline mb-6 inline-flex group">
-            <div className="w-9 h-9 border border-gold border-opacity-60 rounded-md flex items-center justify-center bg-gradient-to-br from-gold/15 to-transparent shrink-0 group-hover:border-opacity-100 transition-all duration-300">
-              <svg width="18" height="18" viewBox="0 0 18 18" fill="none" className="shrink-0">
-                <path d="M2 14L6 8.5L10 11.5L16 4" stroke="currentColor" className="text-gold-light" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"/>
-                <circle cx="16" cy="4" r="1.5" fill="currentColor" className="text-gold-light"/>
-              </svg>
-            </div>
+
             <div className="flex flex-col gap-0.5">
               <span className="font-serif text-[1.15rem] font-semibold text-gold-light leading-none tracking-tight">
                 TheEthicalTrader

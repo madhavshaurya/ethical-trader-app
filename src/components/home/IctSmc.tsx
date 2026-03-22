@@ -7,10 +7,12 @@ const TABS = [
   { id: 'orderblocks', label: 'Order Blocks' },
   { id: 'liquidity', label: 'Liquidity' },
   { id: 'fvg', label: 'Fair Value Gaps' },
-  { id: 'killzones', label: 'Killzones' }
+  { id: 'killzones', label: 'Killzones' },
+  { id: 'timeprice', label: 'Time & Price' }
 ];
 
 const CARDS = {
+  // ... existing cards ...
   structure: [
     { icon: '📈', title: 'Market Structure Shift (MSS)', desc: 'The first structural signal that institutional bias has reversed. Price violates a significant swing leaving a displacement candle and FVG. MSS + liquidity sweep = the highest-probability ICT entry model.' },
     { icon: '🔄', title: 'Break of Structure (BOS)', desc: 'Confirms trend continuation. Each successive BOS in trend direction validates institutional order flow. Trade with BOS, never against it unless a CHoCH precedes it.' },
@@ -40,6 +42,12 @@ const CARDS = {
     { icon: '🌆', title: 'New York Killzone (7–10 AM EST)', desc: 'The second most powerful window. NY open creates displacement moves as US participants enter. The first 2–3 hours define daily bias and produce the day\'s cleanest setups.' },
     { icon: '🌙', title: 'Asian Range & Consolidation', desc: 'Asia builds the range that London and New York hunt. Equal highs and lows formed during Asian consolidation become primary liquidity pools for London\'s opening sweeps.' },
     { icon: '📅', title: 'NWOG & NDOG', desc: 'New Week and New Day Opening Gaps are powerful price magnets defining key premium/discount zones for daily and weekly trade objectives.' }
+  ],
+  timeprice: [
+    { icon: '⏳', title: 'ICT Time & Price Theory', desc: 'The foundational law: Time defines WHERE price will go. Institutional algorithms operate on specific time cycles (Daily/Weekly/Monthly) to hunt liquidity and rebalance inefficiencies.' },
+    { icon: '📊', title: 'Monthly Open Importance', desc: 'The Monthly Open price acts as a "Gravity Well". Trading above it is Premium (Sell Zone), trading below it is Discount (Buy Zone). All institutional bias stems from this single level.' },
+    { icon: '🧭', title: 'HTF Directional Bias', desc: 'Use Monthly and Weekly charts to define the Institutional Order Flow. If the Monthly is bullish, you ONLY look for discount buys on lower timeframes during specific Killzones.' },
+    { icon: '🔗', title: 'Multi-Timeframe Integration', desc: 'The bridge between HTF bias and LTF execution. Aligning Monthly direction with Daily displacement and 15m entry models produces the highest risk-to-reward setups.' }
   ]
 };
 

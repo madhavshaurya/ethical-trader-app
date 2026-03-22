@@ -45,6 +45,8 @@ export default function Header() {
                 key={item}
                 href={`/#${item === 'ICT / SMC' ? 'ict' : item.toLowerCase().replace(/\s|\//g, '')}`}
                 onClick={() => setIsMenuOpen(false)}
+                target={item === 'Terminal' ? '_blank' : undefined}
+                rel={item === 'Terminal' ? 'noopener noreferrer' : undefined}
                 className={`group flex flex-col items-center transition-all duration-700 ${isMenuOpen ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0'}`}
                 style={{ transitionDelay: `${idx * 100}ms` }}
               >
@@ -68,12 +70,7 @@ export default function Header() {
       <header className="fixed top-8 left-0 right-0 z-[1050] h-14 md:h-16 bg-[#040305E6] backdrop-blur-xl border-b border-white/5">
         <div className="max-w-[1440px] mx-auto h-full flex items-center justify-between px-6 md:px-16">
           <Link href="/" className="flex items-center gap-3.5 no-underline group shrink-0">
-            <div className="w-9 h-9 border border-gold border-opacity-60 rounded-md flex items-center justify-center bg-gradient-to-br from-gold/15 to-transparent flex-shrink-0 group-hover:border-opacity-100 transition-all duration-300">
-              <svg width="18" height="18" viewBox="0 0 18 18" fill="none" className="shrink-0">
-                <path d="M2 14L6 8.5L10 11.5L16 4" stroke="currentColor" className="text-gold-light" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"/>
-                <circle cx="16" cy="4" r="1.5" fill="currentColor" className="text-gold-light"/>
-              </svg>
-            </div>
+
             <div className="flex flex-col gap-0.5">
               <span className="font-serif text-[1.1rem] md:text-[1.15rem] font-semibold text-gold-light leading-none tracking-tight">
                 TheEthicalTrader
@@ -91,6 +88,8 @@ export default function Header() {
                 <Link 
                   href={`/#${item === 'ICT / SMC' ? 'ict' : item.toLowerCase().replace(/\s|\//g, '')}`} 
                   className="text-[0.7rem] font-bold tracking-[0.15em] uppercase text-stone hover:text-gold transition-colors"
+                  target={item === 'Terminal' ? '_blank' : undefined}
+                  rel={item === 'Terminal' ? 'noopener noreferrer' : undefined}
                 >
                   {item}
                 </Link>

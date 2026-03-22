@@ -7,6 +7,8 @@ export interface ButtonProps
   variant?: 'primary' | 'secondary' | 'ghost' | 'gold' | 'ghostPlan';
   asChild?: boolean;
   href?: string;
+  target?: string;
+  rel?: string;
 }
 
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
@@ -27,7 +29,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
 
     if (href) {
       return (
-        <Link href={href} className={classes}>
+        <Link href={href} className={classes} target={props.target} rel={props.rel}>
           {children}
           {variant === 'primary' && (
             <div className="absolute inset-0 bg-gradient-to-r from-transparent via-[rgba(255,255,255,0.15)] to-transparent -translate-x-[100%] hover:translate-x-[100%] transition-transform duration-[600ms]" />

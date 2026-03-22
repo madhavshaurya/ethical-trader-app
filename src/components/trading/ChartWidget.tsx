@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { createChart, CandlestickSeries } from 'lightweight-charts';
 
-export default function ChartWidget({ symbol }: { symbol: string }) {
+export default function ChartWidget({ symbol, panelHeight }: { symbol: string, panelHeight?: number }) {
   const chartContainerRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<any>(null);
   const seriesRef = useRef<any>(null);
@@ -11,20 +11,27 @@ export default function ChartWidget({ symbol }: { symbol: string }) {
   const [price, setPrice] = useState(0);
   const [change, setChange] = useState(0);
 
-  // Map symbols to Binance standard
-  const binanceSymbol = (() => {
-    const map: Record<string, string> = {
-      'EUR-USD': 'EURUSDT',
-      'GBP-USD': 'GBPUSDT',
-      'NQ1-USD': 'BTCUSDT', // Proxy for Nasdaq
-      'ES1-USD': 'BTCUSDT', // Proxy for S&P
-      'XAU-USD': 'PAXGUSDT', // Gold (PAXG is Gold-backed coin)
-      'BTC-USD': 'BTCUSDT',
-      'ETH-USD': 'ETHUSDT',
-      'DXY-USD': 'EURUSDT', // Inverse proxy
-    };
-    return map[symbol] || symbol.replace('-', '').replace('USD', 'USDT').toUpperCase();
-  })();
+  // Clean symbol extraction (e.g., 'NSE:JPPOWER' -> 'JPPOWER')
+  const cleanSymbol = symbol.includes(':') ? symbol.split(':')[1] || symbol : symbol;
+
+  // Handle Resize whenever panelHeight (from the draggable resizer) changes
+  useEffect(() => {
+    if (chartRef.current && chartContainerRef.current) {
+      chartRef.current.resize(
+        chartContainerRef.current.clientWidth,
+        chartContainerRef.current.clientHeight
+      );
+    }
+  }, [panelHeight]);
+
+  // Automatically identify asset class to route to correct backend proxy
+  const isCrypto = cleanSymbol.includes('USD') || cleanSymbol.includes('EUR') || cleanSymbol.includes('ETH') || cleanSymbol.includes('BTC') || cleanSymbol.includes('SOL') || symbol.startsWith('BINANCE:');
+  
+  // Clean symbol for Binance if Crypto
+  let binanceSymbol = cleanSymbol.replace('-', '');
+  if (isCrypto && binanceSymbol.endsWith('USD')) {
+     binanceSymbol = binanceSymbol.replace(/USD$/, 'USDT');
+  }
 
   const [loading, setLoading] = useState(true);
 
@@ -71,8 +78,29 @@ export default function ChartWidget({ symbol }: { symbol: string }) {
 
     const fetchData = async () => {
       try {
-        const response = await fetch(`https://api.binance.com/api/v3/klines?symbol=${binanceSymbol}&interval=${tf}&limit=200`);
-        if (!response.ok) throw new Error('Symbol not found');
+        const isFutures = binanceSymbol === 'XAUUSDT';
+        const wsUrl = isFutures ? 'wss://fstream.binance.com/ws' : 'wss://stream.binance.com:9443/ws';
+        
+        let response;
+        if (isCrypto) {
+            response = await fetch(`/api/klines?symbol=${binanceSymbol}&interval=${tf}&limit=200`);
+        } else {
+            response = await fetch(`/api/yahoo-klines?symbol=${symbol}&interval=${tf}`);
+        }
+        
+        if (!response.ok) {
+          // If the specific symbol fails, try one more time with a clean base symbol if it had a prefix
+          if (symbol.includes(':')) {
+            const fallbackRes = await fetch(`/api/yahoo-klines?symbol=${cleanSymbol}&interval=${tf}`);
+            if (fallbackRes.ok) {
+              response = fallbackRes;
+            } else {
+              throw new Error('Symbol not found');
+            }
+          } else {
+            throw new Error('Symbol not found');
+          }
+        }
         const klines = await response.json();
         
         const formattedData = klines.map((k: any) => ({
@@ -92,27 +120,59 @@ export default function ChartWidget({ symbol }: { symbol: string }) {
         const start = formattedData[0];
         setChange(((last.close - start.close) / start.close) * 100);
 
-        // Initialize WebSocket only after successful fetch
-        socket = new WebSocket(`wss://stream.binance.com:9443/ws/${binanceSymbol.toLowerCase()}@kline_${tf}`);
-        socket.onmessage = (event) => {
-          try {
-            const msg = JSON.parse(event.data);
-            if (msg.e !== 'kline') return;
-            const k = msg.k;
-            const candle = {
-              time: (k.t / 1000) as import('lightweight-charts').Time,
-              open: parseFloat(k.o),
-              high: parseFloat(k.h),
-              low: parseFloat(k.l),
-              close: parseFloat(k.c),
-            };
-            series.update(candle);
-            setPrice(candle.close);
-          } catch (e) {}
-        };
+        // Streaming / Polling logic for live updates
+        if (isFutures || !isCrypto) {
+          // Polling fallback to avoid Browser SecurityError with fstream websockets, 
+          // and to poll Yahoo Finance which lacks public websockets
+          const pollInterval = window.setInterval(async () => {
+            try {
+              const fetchUrl = isCrypto 
+                ? `/api/klines?symbol=${binanceSymbol}&interval=${tf}&limit=1`
+                : `/api/yahoo-klines?symbol=${symbol}&interval=${tf}&limit=1`;
+                
+              const res = await fetch(fetchUrl);
+              if (res.ok) {
+                const data = await res.json();
+                if (data && data.length > 0) {
+                  const k = data[0];
+                  const candle = {
+                    time: (k[0] / 1000) as import('lightweight-charts').Time,
+                    open: parseFloat(k[1]),
+                    high: parseFloat(k[2]),
+                    low: parseFloat(k[3]),
+                    close: parseFloat(k[4]),
+                  };
+                  series.update(candle);
+                  setPrice(candle.close);
+                }
+              }
+            } catch (e) {}
+          }, 3000);
+          socket = { close: () => window.clearInterval(pollInterval) } as any;
+        } else {
+          socket = new WebSocket(`${wsUrl}/${binanceSymbol.toLowerCase()}@kline_${tf}`);
+          socket.onmessage = (event) => {
+            try {
+              const msg = JSON.parse(event.data);
+              if (msg.e !== 'kline') return;
+              const k = msg.k;
+              const candle = {
+                time: (k.t / 1000) as import('lightweight-charts').Time,
+                open: parseFloat(k.o),
+                high: parseFloat(k.h),
+                low: parseFloat(k.l),
+                close: parseFloat(k.c),
+              };
+              series.update(candle);
+              setPrice(candle.close);
+            } catch (e) {}
+          };
+        }
       } catch (err) {
         console.error('Chart Data Error:', err);
         setLoading(false);
+        // Set an empty state so the chart doesn't just hang on the previous symbol's data
+        if (series) series.setData([]);
       }
     };
 
@@ -131,14 +191,14 @@ export default function ChartWidget({ symbol }: { symbol: string }) {
       window.removeEventListener('resize', handleResize);
       chart.remove();
     };
-  }, [symbol, binanceSymbol, tf]);
+  }, [symbol, binanceSymbol, isCrypto, tf]);
 
   return (
     <div className="flex flex-col h-full bg-void overflow-hidden">
       <div className="flex items-center justify-between py-3.5 px-6 border-b border-border-subtle bg-black/30">
         <div className="flex items-center gap-4">
           <div className="font-serif text-[1.4rem] font-semibold text-ivory">
-            {symbol.replace('-', ' / ')}
+            {cleanSymbol.replace('-', ' / ')}
           </div>
           <div className="flex items-center gap-1.5 text-[0.6rem] font-bold tracking-[0.18em] text-bull uppercase">
             <span className="w-1.5 h-1.5 rounded-full bg-bull animate-[live-pulse_1.4s_infinite]" />
