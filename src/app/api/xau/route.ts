@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { fetchYahooDaily } from '@/lib/yahoo';
 
 export async function GET() {
   try {
@@ -17,36 +18,24 @@ export async function GET() {
     // SESSION 2: Fallback to Yahoo Finance if Binance blocks (451/403/Forbidden)
     if (!binanceRes.ok) {
        console.log('XAU: Binance blocked, falling back to Yahoo...');
-       const yahooRes = await fetch(`https://query2.finance.yahoo.com/v8/finance/chart/GC=F?interval=1d&range=5d`, {
-          headers: {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-            'Accept': 'application/json'
-          },
-          cache: 'no-store'
-       });
-       
-       if (yahooRes.ok) {
-          const yData = await yahooRes.json();
-          const result = yData.chart.result?.[0];
-          if (result && result.meta) {
-            const currentPrice = result.meta.regularMarketPrice;
-            const prevClose = result.meta.chartPreviousClose || result.meta.previousClose;
-            
-            return NextResponse.json({
-              symbol: 'XAUUSD (Yahoo)',
-              lastPrice: currentPrice.toFixed(2),
-              priceChangePercent: (((currentPrice - prevClose) / prevClose) * 100).toFixed(3)
-            });
-          }
+       const q = await fetchYahooDaily('GC=F');
+       if (q) {
+          return NextResponse.json({
+            symbol: 'XAUUSD (Yahoo)',
+            lastPrice: q.price.toFixed(2),
+            priceChangePercent: q.changePercent.toFixed(3)
+          });
        }
-       
+
        return NextResponse.json({ error: 'XAU Data Unavailable' }, { status: 502 });
     }
     
     const klines = await binanceRes.json();
     if (klines.length < 2) return NextResponse.json({ error: 'No data' }, { status: 404 });
     
-    const prevClose = parseFloat(klines[0][1]);
+    // Binance kline indices: [1] = open, [4] = close. Daily change must be measured
+    // against yesterday's CLOSE — using [1] measured from yesterday's open, i.e. ~2 days.
+    const prevClose = parseFloat(klines[0][4]);
     const currentPrice = parseFloat(klines[1][4]);
     const priceChangePct = ((currentPrice - prevClose) / prevClose) * 100;
 

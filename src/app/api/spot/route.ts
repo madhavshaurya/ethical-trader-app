@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { fetchYahooDaily } from '@/lib/yahoo';
 
 export async function GET() {
   try {
@@ -31,28 +32,13 @@ export async function GET() {
       // BROAD FALLBACK: If Binance blocks ANY symbol in production (451/403/Forbidden)
       if (!binRes.ok) {
         console.log(`Spot: Binance blocked ${sym}, trying Yahoo fallback...`);
-        const ySym = getYahooSymbol(sym);
-        const yahooRes = await fetch(`https://query2.finance.yahoo.com/v8/finance/chart/${ySym}?interval=1d&range=5d`, {
-          headers: {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-          },
-          cache: 'no-store'
-        });
-        
-        if (yahooRes.ok) {
-          const yData = await yahooRes.json();
-          const result = yData.chart.result?.[0];
-          if (result && result.meta) {
-            const currentPrice = result.meta.regularMarketPrice;
-            const prevClose = result.meta.chartPreviousClose || result.meta.previousClose;
-            const priceChangePct = ((currentPrice - prevClose) / prevClose) * 100;
-            
-            return {
-              symbol: sym,
-              lastPrice: sym === 'EURUSDT' ? currentPrice.toFixed(5) : currentPrice.toFixed(2),
-              priceChangePercent: priceChangePct.toFixed(3)
-            };
-          }
+        const q = await fetchYahooDaily(getYahooSymbol(sym));
+        if (q) {
+          return {
+            symbol: sym,
+            lastPrice: sym === 'EURUSDT' ? q.price.toFixed(5) : q.price.toFixed(2),
+            priceChangePercent: q.changePercent.toFixed(3)
+          };
         }
         return null; // Both failed
       }
@@ -60,7 +46,9 @@ export async function GET() {
       const klines = await binRes.json();
       if (klines.length < 2) return null;
       
-      const prevClose = parseFloat(klines[0][1]);
+      // Binance kline indices: [1] = open, [4] = close. Daily change must be measured
+      // against yesterday's CLOSE — using [1] measured from yesterday's open, i.e. ~2 days.
+      const prevClose = parseFloat(klines[0][4]);
       const currentPrice = parseFloat(klines[1][4]);
       const priceChangePct = ((currentPrice - prevClose) / prevClose) * 100;
       
