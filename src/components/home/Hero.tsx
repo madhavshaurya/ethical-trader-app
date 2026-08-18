@@ -4,13 +4,32 @@ import { Button } from '@/components/ui/Button';
 import { useEffect, useRef, useState } from 'react';
 import { createChart, CandlestickSeries } from 'lightweight-charts';
 
+interface SignalComponent {
+  name: string;
+  reading: string;
+  signal: 'bullish' | 'bearish' | 'neutral';
+}
+
 interface SignalResult {
   bias: 'LONG' | 'SHORT' | 'NEUTRAL';
   agree: number;
   total: number;
   strength: 'strong' | 'moderate' | 'weak';
   adx: number | null;
+  components?: SignalComponent[];
 }
+
+/**
+ * Verifiable facts about what the platform actually contains. These replaced three
+ * fabricated figures — "94.2% Signal Accuracy", "12,400+ Active Members" and
+ * "$2.8M Member Profits" — none of which were derived from anything, on a site whose
+ * entire positioning is transparency. Each number here can be counted on the site.
+ */
+const PLATFORM_FACTS = [
+  { value: '24', label: 'ICT / SMC Concepts' },
+  { value: '6', label: 'Structured Modules' },
+  { value: '4', label: 'Markets Covered' },
+];
 
 export default function Hero() {
   const chartContainerRef = useRef<HTMLDivElement>(null);
@@ -21,15 +40,10 @@ export default function Hero() {
   const [activeAsset, setActiveAsset] = useState({ label: 'XAU/USD', value: 'XAU-USD', isCrypto: false });
   const [change, setChange] = useState<string | null>(null);
   const [isUp, setIsUp] = useState(true);
-  const [delta, setDelta] = useState(4821);
   const [activeInterval, setActiveInterval] = useState('1h');
   const [signal, setSignal] = useState<SignalResult | null>(null);
 
   useEffect(() => {
-    const dInterval = setInterval(() => {
-      setDelta(prev => prev + Math.floor((Math.random() - 0.45) * 150));
-    }, 3500);
-
     const fetchXauPrice = async () => {
       try {
         const res = await fetch('/api/xau');
@@ -47,7 +61,6 @@ export default function Hero() {
     const pInterval = setInterval(fetchXauPrice, 30000);
 
     return () => {
-      clearInterval(dInterval);
       clearInterval(pInterval);
     };
   }, []);
@@ -163,6 +176,8 @@ export default function Hero() {
     };
   }, [activeInterval]);
 
+  const rsi = signal?.components?.find((c) => c.name.startsWith('RSI'));
+
   return (
     <section>
       <div className="min-h-screen pt-[140px] md:pt-[180px] grid grid-cols-1 lg:grid-cols-2 items-center gap-12 lg:gap-20 max-w-[1440px] mx-auto px-6 lg:px-16 pb-16">
@@ -183,26 +198,37 @@ export default function Hero() {
             <Button href="#learn" variant="secondary" className="w-full sm:w-auto">Start Learning</Button>
           </div>
           <div className="grid grid-cols-2 md:grid-cols-3 gap-6 md:gap-8 pt-10 border-t border-border-subtle">
-            <div>
-              <div className="font-serif text-[1.6rem] md:text-[2.2rem] font-semibold text-gold-light leading-none">94.2%</div>
-              <div className="text-[0.55rem] md:text-[0.65rem] font-medium tracking-[0.12em] md:tracking-[0.15em] uppercase text-stone mt-1.5">Signal Accuracy</div>
-            </div>
-            <div>
-              <div className="font-serif text-[1.6rem] md:text-[2.2rem] font-semibold text-gold-light leading-none">12,400+</div>
-              <div className="text-[0.55rem] md:text-[0.65rem] font-medium tracking-[0.12em] md:tracking-[0.15em] uppercase text-stone mt-1.5">Active Members</div>
-            </div>
-            <div className="col-span-2 md:col-span-1">
-              <div className="font-serif text-[1.6rem] md:text-[2.2rem] font-semibold text-gold-light leading-none">$2.8M</div>
-              <div className="text-[0.55rem] md:text-[0.65rem] font-medium tracking-[0.12em] md:tracking-[0.15em] uppercase text-stone mt-1.5">Member Profits</div>
-            </div>
+            {PLATFORM_FACTS.map((fact, i) => (
+              <div key={fact.label} className={i === 2 ? 'col-span-2 md:col-span-1' : undefined}>
+                <div className="font-serif text-[1.6rem] md:text-[2.2rem] font-semibold text-gold-light leading-none">
+                  {fact.value}
+                </div>
+                <div className="text-[0.55rem] md:text-[0.65rem] font-medium tracking-[0.12em] md:tracking-[0.15em] uppercase text-stone mt-1.5">
+                  {fact.label}
+                </div>
+              </div>
+            ))}
           </div>
         </div>
 
         <div className="relative animate-[fade-up_0.7s_ease_forwards] [animation-delay:0.15s] opacity-0 mt-8 lg:mt-0">
+          {/* Real RSI from the signal engine, on the same instrument and timeframe as the
+              chart. This slot previously showed a "Cum. Delta" figure produced by a
+              Math.random() walk — it was never connected to any market data. */}
           <div className="absolute z-10 bg-[rgba(14,11,24,0.92)] border border-border-mid rounded-lg px-[10px] md:px-[13px] py-[7px] md:py-[9px] backdrop-blur-md -top-[10px] md:-top-[25px] -left-[10px] md:-left-[20px] shadow-2xl">
-            <div className="text-[0.5rem] md:text-[0.55rem] uppercase tracking-[0.15em] text-stone mb-[3px]">Cum. Delta</div>
-            <div className={`font-mono text-[0.8rem] md:text-[0.95rem] font-normal transition-colors ${delta >= 0 ? 'text-bull' : 'text-bear'}`}>
-              {delta >= 0 ? '+' : ''}{delta.toLocaleString()}
+            <div className="text-[0.5rem] md:text-[0.55rem] uppercase tracking-[0.15em] text-stone mb-[3px]">
+              RSI 14
+            </div>
+            <div
+              className={`font-mono text-[0.8rem] md:text-[0.95rem] font-normal transition-colors ${
+                rsi?.signal === 'bullish'
+                  ? 'text-bull'
+                  : rsi?.signal === 'bearish'
+                    ? 'text-bear'
+                    : 'text-cream'
+              }`}
+            >
+              {rsi ? rsi.reading : '––'}
             </div>
           </div>
 

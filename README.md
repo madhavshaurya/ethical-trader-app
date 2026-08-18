@@ -20,8 +20,8 @@ TheEthicalTrader is built on the foundation of **Transparency** and **Integrity*
 
 ### 1. The Terminal
 *   **Lightweight Charts:** Zero-lag institutional charting.
-*   **Order Flow & Delta:** Visualizing aggressive buyer/seller volume and hidden divergences.
-*   **Depth of Market (DOM):** Reading the bid/ask walls of the actual institutional order book.
+*   **Signal Engine:** Indicator-confluence readings (EMA trend, RSI, MACD, directional movement, Bollinger position) computed server-side on live candles.
+*   **Market Screener:** Indian equity, US equity, forex and crypto, sourced from TradingView's scanner.
 
 ### 2. ICT/SMC Education Center
 *   **The Framework:** A comprehensive library covering Market Structure (MSS/BOS), Order Blocks, FVG Imbalances, and Liquidity Pools (BSL/SSL).
