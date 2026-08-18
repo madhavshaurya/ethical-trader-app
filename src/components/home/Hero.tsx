@@ -4,14 +4,26 @@ import { Button } from '@/components/ui/Button';
 import { useEffect, useRef, useState } from 'react';
 import { createChart, CandlestickSeries } from 'lightweight-charts';
 
+interface SignalResult {
+  bias: 'LONG' | 'SHORT' | 'NEUTRAL';
+  agree: number;
+  total: number;
+  strength: 'strong' | 'moderate' | 'weak';
+  adx: number | null;
+}
+
 export default function Hero() {
   const chartContainerRef = useRef<HTMLDivElement>(null);
-  const [price, setPrice] = useState('64,230.50');
+  // No hardcoded seed: this panel is labelled XAU/USD, and the old seed ('64,230.50',
+  // '+1.12%') was a stale BTC-era price that painted under a gold label until the first
+  // fetch landed. Show a placeholder until real data arrives instead.
+  const [price, setPrice] = useState<string | null>(null);
   const [activeAsset, setActiveAsset] = useState({ label: 'XAU/USD', value: 'XAU-USD', isCrypto: false });
-  const [change, setChange] = useState('+1.12%');
+  const [change, setChange] = useState<string | null>(null);
   const [isUp, setIsUp] = useState(true);
   const [delta, setDelta] = useState(4821);
   const [activeInterval, setActiveInterval] = useState('1h');
+  const [signal, setSignal] = useState<SignalResult | null>(null);
 
   useEffect(() => {
     const dInterval = setInterval(() => {
@@ -39,6 +51,32 @@ export default function Hero() {
       clearInterval(pInterval);
     };
   }, []);
+
+  // Live indicator-confluence signal for the instrument on the chart.
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadSignal = async () => {
+      try {
+        const res = await fetch(`/api/signal?symbol=XAUUSDT&interval=${activeInterval}`);
+        if (!res.ok) {
+          if (!cancelled) setSignal(null);
+          return;
+        }
+        const data = await res.json();
+        if (!cancelled) setSignal(data);
+      } catch {
+        if (!cancelled) setSignal(null);
+      }
+    };
+
+    loadSignal();
+    const id = setInterval(loadSignal, 60000);
+    return () => {
+      cancelled = true;
+      clearInterval(id);
+    };
+  }, [activeInterval]);
 
   useEffect(() => {
     if (!chartContainerRef.current) return;
@@ -92,10 +130,13 @@ export default function Hero() {
 
     fetchData();
 
-    // WebSocket for live updates
-    const socket = new WebSocket(`wss://stream.binance.com:9443/ws/xauusdt@kline_${activeInterval.toLowerCase()}`);
+    // WebSocket for live updates.
+    // XAUUSDT exists only on Binance FUTURES (spot returns -1121 "Invalid symbol"),
+    // so this must use fstream, not stream. Matches ChartWidget's futures handling.
+    const socket = new WebSocket(`wss://fstream.binance.com/ws/xauusdt@kline_${activeInterval.toLowerCase()}`);
     socket.onmessage = (event) => {
       const msg = JSON.parse(event.data);
+      if (msg.e !== 'kline' || !msg.k) return;
       const k = msg.k;
       const candle = {
         time: (k.t / 1000) as import('lightweight-charts').Time,
@@ -178,9 +219,9 @@ export default function Hero() {
               </div>
 
               <div className="text-right">
-                <div className="font-mono text-sm md:text-base font-normal text-ivory">{price}</div>
-                <div className={`text-[0.6rem] md:text-[0.7rem] font-mono mt-[2px] ${isUp ? 'text-bull' : 'text-bear'}`}>
-                  {isUp ? '▲' : '▼'} {change}
+                <div className="font-mono text-sm md:text-base font-normal text-ivory">{price ?? '––––'}</div>
+                <div className={`text-[0.6rem] md:text-[0.7rem] font-mono mt-[2px] ${change === null ? 'text-stone' : isUp ? 'text-bull' : 'text-bear'}`}>
+                  {change === null ? '–' : `${isUp ? '▲' : '▼'} ${change}`}
                 </div>
               </div>
             </div>
@@ -208,8 +249,22 @@ export default function Hero() {
           </div>
 
           <div className="absolute z-10 bg-[rgba(14,11,24,0.92)] border border-border-mid rounded-lg px-[10px] md:px-[13px] py-[7px] md:py-[9px] backdrop-blur-md -bottom-[10px] md:-bottom-[14px] -right-[10px] md:-right-[14px]">
-            <div className="text-[0.5rem] md:text-[0.55rem] uppercase tracking-[0.15em] text-stone mb-[3px]">AI Signal</div>
-            <div className="font-mono text-[0.7rem] md:text-[0.82rem] font-normal text-bull">LONG ▲ 89% conf.</div>
+            <div className="text-[0.5rem] md:text-[0.55rem] uppercase tracking-[0.15em] text-stone mb-[3px]">
+              Signal · {activeInterval.toUpperCase()}
+            </div>
+            <div
+              className={`font-mono text-[0.7rem] md:text-[0.82rem] font-normal ${
+                signal?.bias === 'LONG'
+                  ? 'text-bull'
+                  : signal?.bias === 'SHORT'
+                    ? 'text-bear'
+                    : 'text-stone'
+              }`}
+            >
+              {signal
+                ? `${signal.bias} ${signal.bias === 'LONG' ? '▲' : signal.bias === 'SHORT' ? '▼' : '■'} ${signal.agree}/${signal.total}`
+                : '––––'}
+            </div>
           </div>
         </div>
       </div>

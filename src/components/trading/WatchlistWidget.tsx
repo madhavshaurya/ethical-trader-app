@@ -29,12 +29,39 @@ const INITIAL_FOREX = [
   { sym: 'BTCUSDT', name: 'Bitcoin' },
 ];
 
+const INDIAN_SYMBOLS: Record<string, 'NSE' | 'BSE'> = {
+  'NIFTY 50': 'NSE',
+  SENSEX: 'BSE',
+  RELIANCE: 'NSE',
+};
+
+/**
+ * Venue and quote currency for a symbol. The previous inline checks keyed off
+ * `sym.includes('USD')`, which priced SPX, AAPL and TSLA in INR and reported every
+ * non-crypto instrument as "Market closed" even mid-session.
+ */
+function symbolMeta(sym: string): { venue: string; currency: string; alwaysOpen: boolean } {
+  const s = (sym || '').toUpperCase();
+
+  if (s.endsWith('USDT')) return { venue: 'Binance', currency: 'USD', alwaysOpen: true };
+
+  if (INDIAN_SYMBOLS[s]) return { venue: INDIAN_SYMBOLS[s], currency: 'INR', alwaysOpen: false };
+  if (s.startsWith('BSE:') || s.endsWith('.BO')) return { venue: 'BSE', currency: 'INR', alwaysOpen: false };
+  if (s.startsWith('NSE:') || s.endsWith('.NS')) return { venue: 'NSE', currency: 'INR', alwaysOpen: false };
+
+  if (s === 'XAUUSD') return { venue: 'Spot Gold', currency: 'USD', alwaysOpen: false };
+  if (/^[A-Z]{6}$/.test(s)) return { venue: 'Forex', currency: 'USD', alwaysOpen: false };
+
+  return { venue: 'US Market', currency: 'USD', alwaysOpen: false };
+}
+
 export default function WatchlistWidget({ activeSymbol }: { activeSymbol: string }) {
   const router = useRouter();
   const [data, setData] = useState<Record<string, WatchlistData>>({});
   
   // Details pane state
   const activeData = data[activeSymbol] || { sym: activeSymbol, name: '-', last: 0, chg: 0, chgPct: 0 };
+  const activeMeta = symbolMeta(activeData.sym);
 
   useEffect(() => {
     let isMounted = true;
@@ -284,7 +311,9 @@ export default function WatchlistWidget({ activeSymbol }: { activeSymbol: string
          </div>
          
          <div className="text-[12px] text-[#A3A6AF] mb-3 truncate">
-            {activeData.name} • Internal Exchange
+            {activeData.name && activeData.name !== activeData.sym
+              ? `${activeData.name} • ${activeMeta.venue}`
+              : activeMeta.venue}
          </div>
 
          <div className="flex items-baseline gap-2 mb-1">
@@ -292,7 +321,7 @@ export default function WatchlistWidget({ activeSymbol }: { activeSymbol: string
                {formatPrice(activeData.last, activeData.sym)}
             </span>
             <span className="text-[14px] text-[#A3A6AF] font-medium tracking-tight">
-               {activeData.sym.includes('USD') || activeData.sym.includes('BTC') ? 'USD' : 'INR'}
+               {activeMeta.currency}
             </span>
          </div>
          
@@ -301,24 +330,16 @@ export default function WatchlistWidget({ activeSymbol }: { activeSymbol: string
             <span>{activeIsUp ? '+' : ''}{activeData.chgPct.toFixed(2)}%</span>
          </div>
 
-         <div className="flex items-center gap-1.5 text-[11px] text-[#A3A6AF] mb-4">
-            {activeData.sym.includes('USD') || activeData.sym.includes('BTC') || activeData.sym.includes('XAU') ? (
-              <><span className="w-2 h-2 rounded-full bg-[#089981] animate-pulse"></span>Market open 24/7</>
-            ) : (
-              <><span className="w-2 h-2 rounded-full bg-[#A3A6AF]"></span>Market closed</>
-            )}
-         </div>
+         {activeMeta.alwaysOpen && (
+           <div className="flex items-center gap-1.5 text-[11px] text-[#A3A6AF] mb-4">
+             <span className="w-2 h-2 rounded-full bg-[#089981] animate-pulse"></span>
+             Trades 24/7
+           </div>
+         )}
 
-         {/* Dynamic Seasonals Chart Area mapped to active symbol signature */}
-         <div className="flex-1 mt-auto border-t border-[#2A2B2E] pt-3 pb-2 flex flex-col min-h-0">
-            <h4 className="text-[12px] font-semibold text-[#D1D4DC] mb-2">Seasonals Profile</h4>
-            <div className="flex-1 w-full flex items-end gap-[3px] opacity-60">
-               {[...activeData.sym, ...activeData.sym].map((char, i) => {
-                 const heightVal = (((char.charCodeAt(0) * (i + 1)) % 10) + 1) * 10;
-                 return <div key={i} className="flex-1 bg-[#2962FF] rounded-sm min-w-1 min-h-[1px]" style={{ height: `${heightVal}%` }}></div>;
-               })}
-            </div>
-         </div>
+         {/* A "Seasonals Profile" chart used to sit here, but its bar heights were
+             derived from the character codes of the ticker string — it displayed no
+             market data at all. Removed rather than left as decoration on a terminal. */}
       </div>
 
     </div>

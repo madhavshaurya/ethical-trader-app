@@ -28,6 +28,7 @@ export default function Footer() {
             <li><Link href="/#terminal" className="text-[0.8rem] text-parchment hover:text-gold-light transition-colors">Terminal</Link></li>
             <li><Link href="/#ict" className="text-[0.8rem] text-parchment hover:text-gold-light transition-colors">ICT Concepts</Link></li>
             <li><Link href="/#pricing" className="text-[0.8rem] text-parchment hover:text-gold-light transition-colors">Pricing</Link></li>
+            <li><Link href="/account-management" className="text-[0.8rem] text-gold/80 hover:text-gold-light transition-colors">Managed Accounts</Link></li>
           </ul>
         </div>
         

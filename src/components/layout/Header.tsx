@@ -5,18 +5,24 @@ import Ticker from './Ticker';
 import { useState, useEffect } from 'react';
 import { SITE_CONFIG } from '@/lib/constants';
 
+const NAV_ITEMS = [
+  { label: 'Learn', href: '/#learn' },
+  { label: 'Terminal', href: '/#terminal' },
+  { label: 'ICT / SMC', href: '/#ict' },
+  { label: 'Pricing', href: '/#pricing' },
+  { label: 'Managed Accounts', href: '/account-management', accent: true },
+] as const;
+
 export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   
   // Prevent scrolling when menu is open
   useEffect(() => {
-    if (isMenuOpen) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = 'unset';
-    }
+    // Lock the vertical axis only — the shorthand would also clear the
+    // site-wide `overflow-x: hidden` guard set on body in globals.css.
+    document.body.style.overflowY = isMenuOpen ? 'hidden' : '';
     return () => {
-      document.body.style.overflow = 'unset';
+      document.body.style.overflowY = '';
     };
   }, [isMenuOpen]);
 
@@ -25,7 +31,10 @@ export default function Header() {
       <Ticker />
       
       {/* Mobile Sidebar - Fully Opaque & Layered Above All */}
-      <div className={`fixed inset-0 w-full h-full bg-[#040305] z-[1100] transition-all duration-500 ease-[cubic-bezier(0.23,1,0.32,1)] ${isMenuOpen ? 'opacity-100 pointer-events-auto translate-y-0' : 'opacity-0 pointer-events-none -translate-y-full'}`}>
+      <div
+        inert={!isMenuOpen}
+        className={`fixed inset-0 w-full h-full bg-[#040305] z-[1100] transition-all duration-500 ease-[cubic-bezier(0.23,1,0.32,1)] ${isMenuOpen ? 'opacity-100 pointer-events-auto translate-y-0' : 'opacity-0 pointer-events-none -translate-y-full'}`}
+      >
         
         {/* Dedicated Close Button inside the menu */}
         <button 
@@ -40,18 +49,16 @@ export default function Header() {
 
         <div className="flex flex-col items-center justify-center h-full space-y-12 px-6">
           <div className="flex flex-col items-center gap-10">
-            {['Learn', 'Terminal', 'ICT / SMC', 'Pricing'].map((item, idx) => (
+            {NAV_ITEMS.map((item, idx) => (
               <Link 
-                key={item}
-                href={`/#${item === 'ICT / SMC' ? 'ict' : item.toLowerCase().replace(/\s|\//g, '')}`}
+                key={item.label}
+                href={item.href}
                 onClick={() => setIsMenuOpen(false)}
-                target={idx === 100 ? '_blank' : undefined}
-                rel={idx === 100 ? 'noopener noreferrer' : undefined}
                 className={`group flex flex-col items-center transition-all duration-700 ${isMenuOpen ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0'}`}
                 style={{ transitionDelay: `${idx * 100}ms` }}
               >
-                <span className="block italic opacity-40 text-[0.7rem] font-sans tracking-[0.4em] uppercase mb-1">{item}</span>
-                <span className="font-serif text-[2.6rem] font-light text-ivory group-hover:text-gold-light transition-colors">{item}</span>
+                <span className="block italic opacity-40 text-[0.7rem] font-sans tracking-[0.4em] uppercase mb-1">{item.label}</span>
+                <span className={`font-serif text-[2.2rem] sm:text-[2.6rem] font-light group-hover:text-gold-light transition-colors ${'accent' in item ? 'text-gold-mid' : 'text-ivory'}`}>{item.label}</span>
               </Link>
             ))}
           </div>
@@ -82,16 +89,14 @@ export default function Header() {
           </Link>
           
           {/* Desktop Nav */}
-          <ul className="list-none hidden md:flex items-center gap-10">
-            {['Learn', 'Terminal', 'ICT / SMC', 'Pricing'].map((item) => (
-              <li key={item}>
+          <ul className="list-none hidden lg:flex items-center gap-8 xl:gap-10">
+            {NAV_ITEMS.map((item) => (
+              <li key={item.label}>
                 <Link 
-                  href={`/#${item === 'ICT / SMC' ? 'ict' : item.toLowerCase().replace(/\s|\//g, '')}`}
-                  className="text-[0.7rem] font-bold tracking-[0.15em] uppercase text-stone hover:text-gold transition-colors"
-                  target={undefined}
-                  rel={undefined}
+                  href={item.href}
+                  className={`whitespace-nowrap text-[0.7rem] font-bold tracking-[0.15em] uppercase transition-colors ${'accent' in item ? 'text-gold/80 hover:text-gold-light' : 'text-stone hover:text-gold'}`}
                 >
-                  {item}
+                  {item.label}
                 </Link>
               </li>
             ))}
@@ -109,7 +114,7 @@ export default function Header() {
             {/* Mobile Menu Button - Locked to top of all layers */}
             <button 
               onClick={() => setIsMenuOpen(!isMenuOpen)}
-              className="md:hidden flex flex-col items-center justify-center gap-2 w-10 h-10 bg-onyx/50 border border-border-subtle rounded-md cursor-pointer z-[1200] relative"
+              className="lg:hidden flex flex-col items-center justify-center gap-2 w-10 h-10 bg-onyx/50 border border-border-subtle rounded-md cursor-pointer z-[1200] relative"
               aria-label="Toggle Menu"
             >
               <span className={`w-5 h-[1.5px] bg-gold-light transition-all duration-300 ${isMenuOpen ? 'rotate-45 translate-y-[4.5px]' : ''}`} />
