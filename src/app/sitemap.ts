@@ -5,8 +5,8 @@ import { absoluteUrl } from '@/lib/site';
 /**
  * Hand-curated static routes with their crawl priority.
  *
- * Previously this listed /terms, which has no page — a sitemap entry that 404s is a
- * negative quality signal — and omitted all four /markets/* pages, which do exist.
+ * /live-terminal/[symbol] is deliberately excluded (see below); everything else that
+ * renders real content is listed.
  * /live-terminal/[symbol] is deliberately excluded: it is an interactive tool with
  * unbounded symbol permutations and no indexable content.
  */
@@ -20,6 +20,7 @@ const STATIC_ROUTES: { path: string; priority: number; changeFrequency: Metadata
   { path: '/markets/indices', priority: 0.7, changeFrequency: 'weekly' },
   { path: '/markets/commodities', priority: 0.7, changeFrequency: 'weekly' },
   { path: '/markets/crypto', priority: 0.7, changeFrequency: 'weekly' },
+  { path: '/terms', priority: 0.3, changeFrequency: 'yearly' },
   { path: '/privacy', priority: 0.3, changeFrequency: 'yearly' },
 ];
 
