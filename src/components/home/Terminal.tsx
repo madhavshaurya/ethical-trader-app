@@ -6,6 +6,26 @@ import { createChart, CandlestickSeries, LineSeries } from 'lightweight-charts';
 import Link from 'next/link';
 import { SITE_CONFIG } from '@/lib/constants';
 
+interface LiveSignal {
+  pair: string;
+  bias: 'LONG' | 'SHORT' | 'NEUTRAL';
+  agree: number;
+  total: number;
+  strength: string;
+  adx: number | null;
+}
+
+/**
+ * Instruments shown in the signal panel. Readings come from /api/signal, which
+ * computes indicator confluence on live candles. This panel previously displayed two
+ * hardcoded signals ("Liquidity sweep + MSS detected on 15m") behind a "Scanning"
+ * pulse — they never changed and were not derived from any market data.
+ */
+const SIGNAL_SYMBOLS = [
+  { symbol: 'BTCUSDT', pair: 'BTC / USD' },
+  { symbol: 'XAUUSDT', pair: 'XAU / USD' },
+];
+
 export default function Terminal() {
   const [mounted, setMounted] = useState(false);
   const [tradeModalOpen, setTradeModalOpen] = useState(false);
@@ -15,8 +35,7 @@ export default function Terminal() {
   const [tickerPrice, setTickerPrice] = useState('0.00');
   const [tickerChange, setTickerChange] = useState('0.00%');
   const [tickerIsUp, setTickerIsUp] = useState(true);
-  const [deltaValues, setDeltaValues] = useState<number[]>([]);
-  const [domValues, setDomValues] = useState<{bid:number, ask:number, p:number}[]>([]);
+  const [liveSignals, setLiveSignals] = useState<LiveSignal[]>([]);
   const [activeSignal, setActiveSignal] = useState(0);
   const [tradePair, setTradePair] = useState('EUR / USD');
   const [tradeDir, setTradeDir] = useState<'buy' | 'sell'>('buy');
@@ -33,37 +52,33 @@ export default function Terminal() {
 
   useEffect(() => {
     setMounted(true);
-    setDeltaValues(Array.from({length: 40}, () => Math.random() * 100));
-    setDomValues(Array.from({length: 8}, (_, i) => ({ 
-      p: 0 + (i - 4) * 0.5, 
-      bid: Math.floor(Math.random() * 80 + 20), 
-      ask: Math.floor(Math.random() * 80 + 20) 
-    })));
-
     const signalInterval = setInterval(() => {
       setActiveSignal(prev => (prev + 1) % 2);
     }, 8000);
 
-    const dInterval = setInterval(() => {
-      setDeltaValues(Array.from({length: 40}, () => Math.random() * 100));
-    }, 3800);
-
-    const domInterval = setInterval(() => {
-      setDomValues(prev => {
-        const center = parseFloat(tickerPrice.replace(/,/g, '')) || 0;
-        return prev.map((d, i) => ({
-          ...d,
-          p: center + (i - 4) * 0.5,
-          bid: Math.max(5, Math.min(100, d.bid + (Math.random() - 0.5) * 15)),
-          ask: Math.max(5, Math.min(100, d.ask + (Math.random() - 0.5) * 15)),
-        }));
-      });
-    }, 800);
+    let cancelled = false;
+    const loadSignals = async () => {
+      const results = await Promise.all(
+        SIGNAL_SYMBOLS.map(async ({ symbol, pair }) => {
+          try {
+            const res = await fetch(`/api/signal?symbol=${symbol}&interval=15m`);
+            if (!res.ok) return null;
+            const d = await res.json();
+            return { pair, bias: d.bias, agree: d.agree, total: d.total, strength: d.strength, adx: d.adx };
+          } catch {
+            return null;
+          }
+        })
+      );
+      if (!cancelled) setLiveSignals(results.filter(Boolean) as LiveSignal[]);
+    };
+    loadSignals();
+    const sigRefresh = setInterval(loadSignals, 60000);
 
     return () => {
+      cancelled = true;
       clearInterval(signalInterval);
-      clearInterval(dInterval);
-      clearInterval(domInterval);
+      clearInterval(sigRefresh);
     };
   }, []); // tickerPrice removed from dependencies to stop effect cycle
 
@@ -301,70 +316,41 @@ export default function Terminal() {
                 <div ref={chartRef} className="w-full h-full block" />
               </div>
             </div>
-
-            <div className="bg-onyx border border-border-subtle rounded-xl overflow-hidden">
-              <div className="flex items-center justify-between py-3 px-5 border-b border-border-subtle bg-black/20">
-                <span className="text-[0.6rem] md:text-[0.65rem] font-bold tracking-[0.15em] uppercase text-stone leading-none">Cumulative Delta</span>
-              </div>
-              <div className="p-4 md:p-6">
-                <div className="h-20 md:h-24 w-full flex items-end gap-0.5 border-b border-border-subtle/30 pb-1">
-                  {deltaValues.map((h, i) => (
-                    <div key={i} className={`flex-1 rounded-t-sm ${Math.random() > 0.4 ? 'bg-bull' : 'bg-bear'}`} style={{ height: `${h}%` }} />
-                  ))}
-                </div>
-              </div>
-            </div>
           </div>
 
           <div className="flex flex-col gap-6 md:gap-8">
             <div className="bg-onyx border border-border-subtle rounded-xl overflow-hidden shadow-xl">
               <div className="flex items-center justify-between py-3 px-5 border-b border-border-subtle bg-black/20">
-                <span className="text-[0.6rem] md:text-[0.65rem] font-bold tracking-[0.15em] uppercase text-stone">Depth Of Market</span>
-                <span className="text-[0.55rem] text-stone italic">Order Book v2.4</span>
-              </div>
-              <div className="grid grid-cols-[1fr_80px_1fr] py-2 text-[0.55rem] md:text-[0.6rem] tracking-[0.1em] uppercase text-ash border-b border-border-subtle/50">
-                <span className="pl-4">Bid</span>
-                <span className="text-center">Price</span>
-                <span className="text-right pr-4">Ask</span>
-              </div>
-              <div className="flex flex-col py-2">
-                {domValues.map((d, i) => (
-                  <div key={i} className="grid grid-cols-[1fr_80px_1fr] relative py-0.5 md:py-1 group">
-                    <div className="absolute left-0 top-0 bottom-0 bg-bull/5 transition-all duration-700" style={{ width: `${d.bid}%` }} />
-                    <div className="absolute right-0 top-0 bottom-0 bg-bear/5 transition-all duration-700" style={{ width: `${d.ask}%` }} />
-                    <div className="px-4 text-bull font-mono text-[0.65rem] md:text-[0.7rem] relative z-10 font-bold">{Math.floor(d.bid)}</div>
-                    <div className="text-center text-ivory font-mono text-[0.62rem] md:text-[0.68rem] relative z-10 bg-void/40 backdrop-blur-sm border-x border-border-subtle/20">
-                      {d.p.toLocaleString(undefined, { minimumFractionDigits: 2 })}
-                    </div>
-                    <div className="text-right px-4 text-bear font-mono text-[0.65rem] md:text-[0.7rem] relative z-10 font-bold">{Math.floor(d.ask)}</div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div className="bg-onyx border border-border-subtle rounded-xl overflow-hidden shadow-xl">
-              <div className="flex items-center justify-between py-3 px-5 border-b border-border-subtle bg-black/20">
                 <span className="text-[0.6rem] md:text-[0.65rem] font-bold tracking-[0.15em] uppercase text-stone leading-none">AI Signal Engine</span>
                 <div className="flex items-center gap-1.5 text-[0.5rem] md:text-[0.6rem] font-bold tracking-[0.18em] text-bull uppercase">
                   <span className="w-1.5 h-1.5 rounded-full bg-bull animate-[live-pulse_1.4s_infinite]" />
-                  Scanning
+                  Live
                 </div>
               </div>
               <div className="p-4 flex flex-col gap-3">
-                <div className={`bg-black/20 border-l-4 border-bull border-y border-r border-border-subtle rounded-lg p-3.5 cursor-pointer hover:bg-black/40 transition-all ${activeSignal === 0 ? 'opacity-100' : 'opacity-40 scale-[0.98]'}`}>
-                  <div className="flex justify-between items-center mb-1.5">
-                    <span className="font-serif font-bold text-[0.95rem] md:text-[1.05rem] text-ivory">BTC / USD</span>
-                    <span className="text-[0.55rem] font-extrabold tracking-[0.1em] px-2 py-0.5 rounded-sm bg-bull text-[#0A0505]">LONG</span>
-                  </div>
-                  <div className="text-[0.65rem] md:text-[0.7rem] text-stone font-light leading-relaxed">Liquidity sweep + MSS detected on 15m timeframe.</div>
-                </div>
-                <div className={`bg-black/20 border-l-4 border-bear border-y border-r border-border-subtle rounded-lg p-3.5 cursor-pointer hover:bg-black/40 transition-all ${activeSignal === 1 ? 'opacity-100' : 'opacity-40 scale-[0.98]'}`}>
-                  <div className="flex justify-between items-center mb-1.5">
-                    <span className="font-serif font-bold text-[0.95rem] md:text-[1.05rem] text-ivory">EUR / USD</span>
-                    <span className="text-[0.55rem] font-extrabold tracking-[0.1em] px-2 py-0.5 rounded-sm bg-bear text-white">SHORT</span>
-                  </div>
-                  <div className="text-[0.65rem] md:text-[0.7rem] text-stone font-light leading-relaxed">Mitigation block rejection at premium premium zones.</div>
-                </div>
+                {liveSignals.length === 0 && (
+                  <div className="text-[0.7rem] text-stone italic py-4 text-center">Loading live readings…</div>
+                )}
+                {liveSignals.map((sig, idx) => {
+                  const bull = sig.bias === 'LONG';
+                  const flat = sig.bias === 'NEUTRAL';
+                  return (
+                    <div
+                      key={sig.pair}
+                      className={`bg-black/20 border-l-4 ${flat ? 'border-stone' : bull ? 'border-bull' : 'border-bear'} border-y border-r border-border-subtle rounded-lg p-3.5 transition-all ${activeSignal === idx ? 'opacity-100' : 'opacity-40 scale-[0.98]'}`}
+                    >
+                      <div className="flex justify-between items-center mb-1.5">
+                        <span className="font-serif font-bold text-[0.95rem] md:text-[1.05rem] text-ivory">{sig.pair}</span>
+                        <span className={`text-[0.55rem] font-extrabold tracking-[0.1em] px-2 py-0.5 rounded-sm ${flat ? 'bg-stone text-void' : bull ? 'bg-bull text-[#0A0505]' : 'bg-bear text-white'}`}>
+                          {sig.bias}
+                        </span>
+                      </div>
+                      <div className="text-[0.65rem] md:text-[0.7rem] text-parchment font-light leading-relaxed">
+                        {sig.agree} of {sig.total} indicators agree · ADX {sig.adx ?? '—'} ({sig.strength} trend) · 15m
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             </div>
           </div>

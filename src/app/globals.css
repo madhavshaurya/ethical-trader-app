@@ -30,7 +30,10 @@
   --color-ivory: #F2EAD8;
   --color-cream: #D8CCBA;
   --color-parchment: #A89880;
-  --color-stone: #6A5A48;
+  /* Lightened from #6A5A48, which sat at 2.80-3.11:1 on the dark surfaces and failed
+     WCAG AA everywhere it was used for text (~77 sites). Same hue, now 4.53-5.02:1
+     on carbon/onyx/void, and still clearly dimmer than parchment (7.32:1). */
+  --color-stone: #8F7A61;
   --color-ash: #3A2E28;
 
   --color-border-subtle: rgba(201, 149, 42, 0.10);

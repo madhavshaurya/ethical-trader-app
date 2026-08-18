@@ -4,6 +4,7 @@ import Starfield from '@/components/layout/Starfield';
 import ChatBot from '@/components/layout/ChatBot';
 import EducationModal from '@/components/home/EducationModal';
 import { SpeedInsights } from "@vercel/speed-insights/next";
+import { Analytics } from "@vercel/analytics/next";
 import { Metadata } from 'next';
 import { SITE_URL, SITE_NAME, SITE_LOCALE, absoluteUrl } from '@/lib/site';
 import { SITE_CONFIG } from '@/lib/constants';
@@ -124,6 +125,7 @@ export default function RootLayout({
         <Footer />
         <EducationModal />
         <ChatBot />
+        <Analytics />
         <SpeedInsights />
       </body>
     </html>
