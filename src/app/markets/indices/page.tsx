@@ -1,9 +1,18 @@
 import { Metadata } from 'next';
+import { pageOpenGraph } from '@/lib/site';
 import ChartWidget from '@/components/trading/ChartWidget';
 
 export const metadata: Metadata = {
   title: 'Stock Indices Analysis | The Ethical Trader',
   description: 'Master the S&P 500 (ES) and Nasdaq 100 (NQ). Join the elite traders who utilize institutional logic to trade market indices with precision.',
+  alternates: {
+    canonical: '/markets/indices',
+  },
+  openGraph: pageOpenGraph({
+    title: 'Stock Indices Analysis | The Ethical Trader',
+    description: 'Master the S&P 500 (ES) and Nasdaq 100 (NQ). Join the elite traders who utilize institutional logic to trade market indices with precision.',
+    url: '/markets/indices',
+  }),
 };
 
 export default function IndicesMarketPage() {

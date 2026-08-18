@@ -1,6 +1,7 @@
 import { Metadata } from 'next';
 import { Button } from '@/components/ui/Button';
 import { SITE_CONFIG, ACCOUNT_MANAGEMENT } from '@/lib/constants';
+import { pageOpenGraph } from '@/lib/site';
 
 export const metadata: Metadata = {
   title: 'Account Handling Management | Managed Trading Accounts',
@@ -9,13 +10,12 @@ export const metadata: Metadata = {
   alternates: {
     canonical: '/account-management',
   },
-  openGraph: {
+  openGraph: pageOpenGraph({
     title: 'Account Handling Management | TheEthicalTrader',
     description:
       'Your capital, managed by professional traders across Indian Equity, F&O and Forex. Every commercial term published up front. Not SEBI Registered — market risks apply.',
     url: '/account-management',
-    type: 'website',
-  },
+  }),
 };
 
 const {

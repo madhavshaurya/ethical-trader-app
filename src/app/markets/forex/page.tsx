@@ -1,9 +1,18 @@
 import { Metadata } from 'next';
+import { pageOpenGraph } from '@/lib/site';
 import ChartWidget from '@/components/trading/ChartWidget';
 
 export const metadata: Metadata = {
   title: 'Forex Trading Intelligence | The Ethical Trader',
   description: 'Master the Forex markets with ICT and SMC logic. Analyze EUR/USD, GBP/USD, and other major pairs with our real-time terminal and institutional insights.',
+  alternates: {
+    canonical: '/markets/forex',
+  },
+  openGraph: pageOpenGraph({
+    title: 'Forex Trading Intelligence | The Ethical Trader',
+    description: 'Master the Forex markets with ICT and SMC logic. Analyze EUR/USD, GBP/USD, and other major pairs with our real-time terminal and institutional insights.',
+    url: '/markets/forex',
+  }),
 };
 
 export default function ForexMarketPage() {

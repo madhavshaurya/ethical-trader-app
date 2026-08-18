@@ -1,9 +1,18 @@
 import { Metadata } from 'next';
+import { pageOpenGraph } from '@/lib/site';
 import ChartWidget from '@/components/trading/ChartWidget';
 
 export const metadata: Metadata = {
   title: 'Cryptocurrency Trading Intelligence | The Ethical Trader',
   description: 'Master the Bitcoin and Ethereum markets with institutional SMC logic. Trade crypto with precision, clarity, and discipline using our live terminal.',
+  alternates: {
+    canonical: '/markets/crypto',
+  },
+  openGraph: pageOpenGraph({
+    title: 'Cryptocurrency Trading Intelligence | The Ethical Trader',
+    description: 'Master the Bitcoin and Ethereum markets with institutional SMC logic. Trade crypto with precision, clarity, and discipline using our live terminal.',
+    url: '/markets/crypto',
+  }),
 };
 
 export default function CryptoMarketPage() {
