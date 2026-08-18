@@ -389,9 +389,10 @@ export default function TermsPage() {
 
           <Section id="law" n="16" title="Governing Law and Jurisdiction">
             <p>
-              These terms are governed by the laws of India. Any dispute arising out of or in
-              connection with them is subject to the exclusive jurisdiction of the courts of
-              competent jurisdiction in India.
+              These terms are governed by and construed in accordance with the laws of India.
+              Any dispute arising out of or in connection with them is subject to the exclusive
+              jurisdiction of the courts at Bengaluru, Karnataka, India, and you consent to that
+              venue.
             </p>
           </Section>
 
