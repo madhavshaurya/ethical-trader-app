@@ -229,7 +229,7 @@ export default function ScreenerPanel() {
                       {row.close ? row.close.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 6 }) : '—'}
                     </td>
                     <td className={`px-2 md:px-4 py-1.5 text-right font-mono tabular-nums font-semibold ${row.changePct > 0 ? 'text-[#089981]' : row.changePct < 0 ? 'text-[#F23645]' : 'text-[#A3A6AF]'}`}>
-                      {row.changePct ? `${row.changePct > 0 ? '+' : ''}${row.changePct.toFixed(2)}%` : '—'}
+                      {typeof row.changePct === 'number' ? `${row.changePct > 0 ? '+' : ''}${row.changePct.toFixed(2)}%` : '—'}
                     </td>
                     <td className="hidden md:table-cell px-4 py-1.5 text-right font-mono tabular-nums text-[#D1D4DC]">
                       {formatNumber(row.volume)}

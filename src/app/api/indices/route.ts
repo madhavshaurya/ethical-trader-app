@@ -1,61 +1,58 @@
 import { NextResponse } from 'next/server';
+import { fetchYahooDaily } from '@/lib/yahoo';
+
+// Yahoo symbol -> the name the frontend expects back.
+const SYMBOL_LABELS: Record<string, string> = {
+  '^NSEI': 'NIFTY 50',
+  '^BSESN': 'SENSEX',
+  '^GSPC': 'SPX',
+  'ES=F': 'ES1!', // E-mini S&P 500 front-month future
+  'NQ=F': 'NQ1!', // E-mini Nasdaq-100 front-month future
+  'DX-Y.NYB': 'DXY', // ICE US Dollar Index
+  AAPL: 'AAPL',
+  TSLA: 'TSLA',
+  'RELIANCE.NS': 'RELIANCE',
+};
+
+const DEFAULT_SYMBOLS = '^NSEI,^BSESN,^GSPC,ES=F,NQ=F,DX-Y.NYB,AAPL,TSLA,RELIANCE.NS';
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const rawSymbols = searchParams.get('symbols');
-  
-  // Default string if none requested
-  let symbols = rawSymbols || '^NSEI,^BSESN,^GSPC,AAPL,TSLA,RELIANCE.NS';
-  
+
+  let symbols = rawSymbols || DEFAULT_SYMBOLS;
+
   // Handle dynamically appended queries from the frontend that have prefixes
   if (rawSymbols) {
-     const parsed = rawSymbols.split(',').map(s => {
-        if (s.startsWith('NSE:')) return s.split(':')[1] + '.NS';
-        if (s.startsWith('BSE:')) return s.split(':')[1] + '.BO';
-        // Auto-strip US Exchanges so Yahoo catches bare tickers (e.g. NASDAQ:AAPL -> AAPL)
-        if (s.includes(':')) return s.split(':')[1];
-        return s;
-     });
-     symbols = parsed.join(',');
+    const parsed = rawSymbols.split(',').map((s) => {
+      if (s.startsWith('NSE:')) return s.split(':')[1] + '.NS';
+      if (s.startsWith('BSE:')) return s.split(':')[1] + '.BO';
+      // Auto-strip US Exchanges so Yahoo catches bare tickers (e.g. NASDAQ:AAPL -> AAPL)
+      if (s.includes(':')) return s.split(':')[1];
+      return s;
+    });
+    symbols = parsed.join(',');
   }
 
-  try {
-    const res = await fetch(`https://query2.finance.yahoo.com/v7/finance/spark?symbols=${encodeURIComponent(symbols)}`, { 
-      headers: { 
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36' 
-      },
-      cache: 'no-store' 
-    });
-    
-    if (!res.ok) {
-      return NextResponse.json({ error: 'Upstream Error' }, { status: res.status });
-    }
-    
-    const data = await res.json();
-    const results = data.spark.result.map((r: any) => {
-      const meta = r.response[0].meta;
-      const price = meta.regularMarketPrice;
-      const prevClose = meta.chartPreviousClose;
-      const changePercent = prevClose ? ((price - prevClose) / prevClose) * 100 : 0;
-      
-      const mapping: Record<string, string> = {
-         '^NSEI': 'NIFTY 50',
-         '^BSESN': 'SENSEX',
-         '^GSPC': 'SPX',
-         'AAPL': 'AAPL',
-         'TSLA': 'TSLA',
-         'RELIANCE.NS': 'RELIANCE'
-      };
+  const list = symbols
+    .split(',')
+    .map((s) => s.trim())
+    .filter(Boolean);
 
-      return {
-         symbol: mapping[meta.symbol] || meta.symbol,
-         lastPrice: price,
-         priceChangePercent: changePercent.toFixed(2)
-      };
-    });
-    
+  try {
+    // One daily-bar request per symbol. The previous batch endpoint (v7/spark) only
+    // returns 5-minute intraday bars, from which the true previous session close
+    // cannot be recovered — see src/lib/yahoo.ts.
+    const quotes = await Promise.all(list.map((s) => fetchYahooDaily(s)));
+
+    const results = quotes.filter(Boolean).map((q) => ({
+      symbol: SYMBOL_LABELS[q!.symbol] || q!.symbol,
+      lastPrice: q!.price,
+      priceChangePercent: q!.changePercent.toFixed(2),
+    }));
+
     return NextResponse.json(results);
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: 'Failed to fetch Indices data' }, { status: 500 });
   }
 }

@@ -9,7 +9,11 @@ export default function ChartWidget({ symbol, panelHeight }: { symbol: string, p
   const seriesRef = useRef<any>(null);
   const [tf, setTf] = useState('15m');
   const [price, setPrice] = useState(0);
-  const [change, setChange] = useState(0);
+  // Reference for the day's change. The header used to measure from the FIRST candle in
+  // the loaded window (200 bars), so a 15m chart reported ~2 days of movement as "today"
+  // — the header read +2.32% while the watchlist correctly showed +0.14% for the same
+  // symbol on the same screen.
+  const [prevClose, setPrevClose] = useState<number | null>(null);
 
   // Clean symbol extraction (e.g., 'NSE:JPPOWER' -> 'JPPOWER')
   const cleanSymbol = symbol.includes(':') ? symbol.split(':')[1] || symbol : symbol;
@@ -34,6 +38,48 @@ export default function ChartWidget({ symbol, panelHeight }: { symbol: string, p
   }
 
   const [loading, setLoading] = useState(true);
+
+  // Previous session close, so the header change matches the watchlist and the ticker.
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadPrevClose = async () => {
+      try {
+        if (isCrypto) {
+          // Binance always prints an in-progress bar for today, so [0] is yesterday.
+          const res = await fetch(`/api/klines?symbol=${binanceSymbol}&interval=1d&limit=2`);
+          if (!res.ok) return;
+          const k = await res.json();
+          if (Array.isArray(k) && k.length >= 2) {
+            const v = parseFloat(k[k.length - 2][4]);
+            if (!cancelled && Number.isFinite(v) && v !== 0) setPrevClose(v);
+          }
+        } else {
+          // /api/indices derives the true previous close (see src/lib/yahoo.ts).
+          const res = await fetch(`/api/indices?symbols=${encodeURIComponent(symbol)}`);
+          if (!res.ok) return;
+          const list = await res.json();
+          const d = Array.isArray(list) ? list[0] : null;
+          if (!d) return;
+          const lastPrice = parseFloat(d.lastPrice);
+          const pct = parseFloat(d.priceChangePercent);
+          if (!Number.isFinite(lastPrice) || !Number.isFinite(pct) || pct === -100) return;
+          const pc = lastPrice / (1 + pct / 100);
+          if (!cancelled && Number.isFinite(pc) && pc !== 0) setPrevClose(pc);
+        }
+      } catch {
+        // Leave prevClose as-is; the header simply omits the change until it resolves.
+      }
+    };
+
+    setPrevClose(null);
+    loadPrevClose();
+    const id = window.setInterval(loadPrevClose, 60000);
+    return () => {
+      cancelled = true;
+      window.clearInterval(id);
+    };
+  }, [symbol, binanceSymbol, isCrypto]);
 
   useEffect(() => {
     if (!chartContainerRef.current) return;
@@ -136,8 +182,6 @@ export default function ChartWidget({ symbol, panelHeight }: { symbol: string, p
 
         const last = formattedData[formattedData.length - 1];
         setPrice(last.close);
-        const start = formattedData[0];
-        setChange(((last.close - start.close) / start.close) * 100);
 
         // Streaming / Polling logic for live updates
         if (isFutures || !isCrypto) {
@@ -213,6 +257,15 @@ export default function ChartWidget({ symbol, panelHeight }: { symbol: string, p
     };
   }, [symbol, binanceSymbol, isCrypto, tf]);
 
+  const change =
+    prevClose !== null && price > 0 ? ((price - prevClose) / prevClose) * 100 : null;
+
+  const formatPrice = (p: number) =>
+    p.toLocaleString(undefined, {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: p >= 1000 ? 2 : p >= 1 ? 4 : 8,
+    });
+
   return (
     <div className="flex flex-col h-full bg-void overflow-hidden">
       <div className="flex items-center justify-between py-3.5 px-6 border-b border-border-subtle bg-black/30">
@@ -228,11 +281,13 @@ export default function ChartWidget({ symbol, panelHeight }: { symbol: string, p
         {!loading && (
           <div className="text-right flex items-center gap-3 md:gap-4">
             <div className="font-mono text-[1.1rem] md:text-xl font-normal text-ivory">
-              {price > 1000 ? price.toLocaleString(undefined, { minimumFractionDigits: 2 }) : price.toFixed(5)}
+              {formatPrice(price)}
             </div>
-            <div className={`text-[0.7rem] md:text-[0.8rem] font-mono ${change >= 0 ? 'text-bull' : 'text-bear'}`}>
-              {change >= 0 ? '▲ +' : '▼ '}{Math.abs(change).toFixed(2)}%
-            </div>
+            {change !== null && (
+              <div className={`text-[0.7rem] md:text-[0.8rem] font-mono ${change >= 0 ? 'text-bull' : 'text-bear'}`}>
+                {change >= 0 ? '▲ +' : '▼ '}{Math.abs(change).toFixed(2)}%
+              </div>
+            )}
           </div>
         )}
       </div>

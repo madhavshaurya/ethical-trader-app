@@ -1,5 +1,37 @@
 import { NextResponse } from 'next/server';
 
+/**
+ * TradingView returns each row as a positional array matching this column order, so the
+ * request list and the response mapping MUST stay in lockstep. They previously drifted:
+ * `description` was requested nowhere yet read from index 6, which is MACD — every row
+ * showed a raw float as its company name, `type` ("stock") rendered in the Market Cap
+ * column, and RSI was read as the rating, so a 0..100 value hit the -1..1 "Strong Buy"
+ * threshold and effectively every symbol was rated Strong Buy.
+ *
+ * Indices are now derived from this array via COLUMNS.indexOf, so adding or reordering a
+ * column cannot silently shift the mapping again.
+ */
+const COLUMNS = [
+  'name',
+  'description',
+  'close',
+  'change',
+  'volume',
+  'market_cap_basic',
+  'Recommend.All',
+  'type',
+  'RSI',
+  'MACD.macd',
+  'MACD.signal',
+  'BB.upper',
+  'BB.lower',
+  'EMA20',
+  'EMA50',
+  'VWAP',
+] as const;
+
+type Column = (typeof COLUMNS)[number];
+
 export async function POST(request: Request) {
   try {
     const body = await request.json();
@@ -32,32 +64,12 @@ export async function POST(request: Request) {
       });
     }
 
-    let reqColumns = [
-        "name",             
-        "close",            
-        "change",           
-        "volume",           
-        "type",             
-        "RSI",               // 8
-        "MACD.macd",         // 9
-        "MACD.signal",       // 10
-        "BB.upper",          // 11
-        "BB.lower",          // 12
-        "EMA20",             // 13
-        "EMA50",             // 14
-        "VWAP"               // 15
-    ];
-
-    if (market === 'forex') {
-      reqColumns[4] = "name"; 
-    }
-
     const payload = {
       filter: filters,
       options: { lang: "en" },
       markets: tvMarketId === 'forex' ? [] : [tvMarketId],
       symbols: { query: { types: [] }, tickers: [] },
-      columns: reqColumns,
+      columns: COLUMNS,
       sort: { sortBy, sortOrder },
       range: [0, 100] // Small range is fine now because the filter will find the exact match
     };
@@ -79,25 +91,30 @@ export async function POST(request: Request) {
        return NextResponse.json({ totalCount: 0, data: [] });
     }
 
-    const results = data.data.map((item: any) => ({
-      providerSymbol: item.s,
-      name: item.d[0],
-      close: item.d[1],
-      changePct: item.d[2],
-      volume: item.d[3],
-      marketCap: item.d[4],
-      rating: item.d[5],
-      description: item.d[6],
-      type: item.d[7],
-      rsi: item.d[8],
-      macd: item.d[9],
-      macdSignal: item.d[10],
-      bbUpper: item.d[11],
-      bbLower: item.d[12],
-      ema20: item.d[13],
-      ema50: item.d[14],
-      vwap: item.d[15]
-    }));
+    const results = data.data.map((item: any) => {
+      const row: unknown[] = item.d ?? [];
+      const at = (column: Column) => row[COLUMNS.indexOf(column)];
+
+      return {
+        providerSymbol: item.s,
+        name: at('name'),
+        description: at('description'),
+        close: at('close'),
+        changePct: at('change'),
+        volume: at('volume'),
+        marketCap: at('market_cap_basic'),
+        rating: at('Recommend.All'),
+        type: at('type'),
+        rsi: at('RSI'),
+        macd: at('MACD.macd'),
+        macdSignal: at('MACD.signal'),
+        bbUpper: at('BB.upper'),
+        bbLower: at('BB.lower'),
+        ema20: at('EMA20'),
+        ema50: at('EMA50'),
+        vwap: at('VWAP')
+      };
+    });
 
     return NextResponse.json({ totalCount: data.totalCount, data: results });
 
