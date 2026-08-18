@@ -1,9 +1,18 @@
 import { Metadata } from 'next';
+import { pageOpenGraph } from '@/lib/site';
 import ChartWidget from '@/components/trading/ChartWidget';
 
 export const metadata: Metadata = {
   title: 'Commodities Trading | The Ethical Trader',
   description: 'Analyze Gold (XAU) and Crude Oil through the lens of institutional liquidity and SMC logic. Trade hard assets with precision and discipline.',
+  alternates: {
+    canonical: '/markets/commodities',
+  },
+  openGraph: pageOpenGraph({
+    title: 'Commodities Trading | The Ethical Trader',
+    description: 'Analyze Gold (XAU) and Crude Oil through the lens of institutional liquidity and SMC logic. Trade hard assets with precision and discipline.',
+    url: '/markets/commodities',
+  }),
 };
 
 export default function CommoditiesMarketPage() {

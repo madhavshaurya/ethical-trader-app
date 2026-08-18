@@ -3,19 +3,52 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { notFound } from 'next/navigation';
 import { posts } from '@/lib/blog-data';
+import { SITE_NAME, SITE_URL, SITE_LOCALE, absoluteUrl } from '@/lib/site';
 
 interface Props {
-  params: { slug: string };
+  // Next 16 passes params as a Promise; the previous non-Promise type was wrong.
+  params: Promise<{ slug: string }>;
+}
+
+/** Blog dates are display strings ("Mar 15, 2026"); structured data needs ISO 8601. */
+function isoDate(value: string): string | undefined {
+  const d = new Date(value);
+  return Number.isNaN(d.getTime()) ? undefined : d.toISOString();
+}
+
+// Pre-render every post at build time so they are static and instantly crawlable.
+export function generateStaticParams() {
+  return posts.map((post) => ({ slug: post.slug }));
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
   const post = posts.find((p) => p.slug === slug);
-  if (!post) return { title: 'Post Not Found' };
+  if (!post) return { title: 'Post Not Found', robots: { index: false, follow: false } };
+
+  const url = `/blog/${post.slug}`;
+  const published = isoDate(post.date);
 
   return {
     title: `${post.title} | The Ethical Trader`,
     description: post.excerpt,
+    alternates: { canonical: url },
+    openGraph: {
+      title: post.title,
+      description: post.excerpt,
+      url,
+      type: 'article',
+      siteName: SITE_NAME,
+      locale: SITE_LOCALE,
+      publishedTime: published,
+      images: [{ url: post.image, alt: post.title }],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: post.title,
+      description: post.excerpt,
+      images: [post.image],
+    },
   };
 }
 
@@ -27,8 +60,31 @@ export default async function BlogPostPage({ params }: Props) {
     notFound();
   }
 
+  const published = isoDate(post.date);
+  const articleJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'BlogPosting',
+    headline: post.title,
+    description: post.excerpt,
+    image: [absoluteUrl(post.image)],
+    articleSection: post.category,
+    datePublished: published,
+    dateModified: published,
+    author: { '@type': 'Organization', name: SITE_NAME, url: SITE_URL },
+    publisher: { '@id': `${SITE_URL}/#organization` },
+    mainEntityOfPage: {
+      '@type': 'WebPage',
+      '@id': absoluteUrl(`/blog/${post.slug}`),
+    },
+    inLanguage: 'en-IN',
+  };
+
   return (
     <article className="pt-32 pb-20 px-6 lg:px-16 min-h-screen bg-void">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(articleJsonLd).replace(/</g, '\\u003c') }}
+      />
       <div className="max-w-[800px] mx-auto">
         <Link 
           href="/blog" 

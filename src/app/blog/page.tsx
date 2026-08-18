@@ -1,4 +1,5 @@
 import { Metadata } from 'next';
+import { pageOpenGraph } from '@/lib/site';
 import Link from 'next/link';
 import Image from 'next/image';
 import { posts } from '@/lib/blog-data';
@@ -6,6 +7,14 @@ import { posts } from '@/lib/blog-data';
 export const metadata: Metadata = {
   title: 'Trading Insights | The Ethical Trader Blog',
   description: 'Explore the latest insights on ICT, SMC, and Order Flow trading. Our blog provides deep dives into market behavior and disciplined trading strategies.',
+  alternates: {
+    canonical: '/blog',
+  },
+  openGraph: pageOpenGraph({
+    title: 'Trading Insights | The Ethical Trader Blog',
+    description: 'Explore the latest insights on ICT, SMC, and Order Flow trading. Our blog provides deep dives into market behavior and disciplined trading strategies.',
+    url: '/blog',
+  }),
 };
 
 export default function BlogPage() {

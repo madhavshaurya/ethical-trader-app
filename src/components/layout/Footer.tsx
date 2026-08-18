@@ -49,6 +49,7 @@ export default function Footer() {
             <li><Link href="/blog" className="text-[0.8rem] text-parchment hover:text-gold-light transition-colors">Blog</Link></li>
             <li><Link href="/contact" className="text-[0.8rem] text-parchment hover:text-gold-light transition-colors">Contact</Link></li>
             <li><Link href="/privacy" className="text-[0.8rem] text-parchment hover:text-gold-light transition-colors">Privacy Policy</Link></li>
+            <li><Link href="/terms" className="text-[0.8rem] text-parchment hover:text-gold-light transition-colors">Terms of Service</Link></li>
           </ul>
         </div>
       </div>

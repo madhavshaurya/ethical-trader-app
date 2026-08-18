@@ -1,8 +1,17 @@
 import { Metadata } from 'next';
+import { pageOpenGraph } from '@/lib/site';
 
 export const metadata: Metadata = {
   title: 'Privacy Policy | The Ethical Trader Data Protection',
   description: 'Understand how The Ethical Trader collects, uses, and protects your information. Our commitment to privacy and data integrity.',
+  alternates: {
+    canonical: '/privacy',
+  },
+  openGraph: pageOpenGraph({
+    title: 'Privacy Policy | The Ethical Trader Data Protection',
+    description: 'Understand how The Ethical Trader collects, uses, and protects your information. Our commitment to privacy and data integrity.',
+    url: '/privacy',
+  }),
 };
 
 export default function PrivacyPage() {
@@ -44,7 +53,7 @@ export default function PrivacyPage() {
           
           <div className="pt-10 border-t border-border-subtle mt-16">
             <p className="text-stone italic text-[0.8rem]">
-              Last Updated: March 19, 2026. For questions regarding this policy, please contact support@theethicaltrader.com.
+              Last Updated: March 19, 2026. For questions regarding this policy, please contact support@theethicaltrader.in.
             </p>
           </div>
         </div>

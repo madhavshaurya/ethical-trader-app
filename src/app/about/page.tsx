@@ -1,8 +1,17 @@
 import { Metadata } from 'next';
+import { pageOpenGraph } from '@/lib/site';
 
 export const metadata: Metadata = {
   title: 'About The Ethical Trader | Our Mission and Philosophy',
   description: 'Learn about The Ethical Trader, our mission for integrity-first trading, and how we empower traders with ICT, SMC, and Order Flow intelligence.',
+  alternates: {
+    canonical: '/about',
+  },
+  openGraph: pageOpenGraph({
+    title: 'About The Ethical Trader | Our Mission and Philosophy',
+    description: 'Learn about The Ethical Trader, our mission for integrity-first trading, and how we empower traders with ICT, SMC, and Order Flow intelligence.',
+    url: '/about',
+  }),
 };
 
 export default function AboutPage() {

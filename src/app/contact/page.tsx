@@ -1,10 +1,19 @@
 import { Metadata } from 'next';
+import { pageOpenGraph } from '@/lib/site';
 import ContactForm from '@/components/contact/ContactForm';
 import { SITE_CONFIG } from '@/lib/constants';
 
 export const metadata: Metadata = {
   title: 'Contact Us | Reach The Ethical Trader Team',
   description: 'Have questions about our trading education or live terminal? Contact The Ethical Trader support or join our community on Telegram.',
+  alternates: {
+    canonical: '/contact',
+  },
+  openGraph: pageOpenGraph({
+    title: 'Contact Us | Reach The Ethical Trader Team',
+    description: 'Have questions about our trading education or live terminal? Contact The Ethical Trader support or join our community on Telegram.',
+    url: '/contact',
+  }),
 };
 
 export default function ContactPage() {
