@@ -7,20 +7,25 @@ const nextConfig: NextConfig = {
         /**
          * Vary: Accept on the negotiable page routes.
          *
-         * The same URL serves HTML or Markdown depending on Accept, so without this a
-         * CDN can hand an agent asking for Markdown whichever variant landed in the
-         * cache first (acceptmarkdown.com requires it).
+         * The same URL serves HTML or Markdown depending on Accept, which is what
+         * acceptmarkdown.com asks this header to advertise.
          *
-         * It has to be set here rather than only in the proxy. Next's App Router page
-         * handler ends with an unconditional
+         * Known limit, measured against production: rendered App Router pages ignore
+         * this. Next's page handler ends with an unconditional
          * `res.setHeader('Vary', getVaryHeader(...))`
-         * (next/dist/build/templates/app-page.js), which replaces whatever the proxy
-         * or this config set on the rendered HTML response. `headers()` is compiled
-         * into the deployment's routing config and applied by the edge *after* the
-         * function returns, so it is the layer that survives — and it is also the
-         * layer doing the caching this header exists to protect. Markdown responses
-         * are returned by the proxy directly and never reach that overwrite, so they
-         * carry the header either way.
+         * (next/dist/build/templates/app-page.js) which replaces whatever the proxy
+         * or this config set, and `headers()` is applied in the routing phase
+         * *before* the function runs, so it cannot win. `/`, `/about` and friends
+         * therefore still emit only Next's RSC tokens. This entry is kept because it
+         * does apply to responses Next does not overwrite — the HTML 404 carries
+         * `Vary: Accept` in production — and it costs nothing where it does not.
+         *
+         * That limit is not a correctness problem here. The proxy runs ahead of the
+         * CDN cache lookup, so a Markdown request is answered by the proxy and never
+         * reads the cached HTML variant: with `/about` sitting at
+         * `x-vercel-cache: HIT`, `Accept: text/markdown` still returns Markdown, and
+         * those responses carry no `x-vercel-cache` at all. Cross-serving cannot
+         * occur, and Markdown responses carry `Vary: Accept` from the proxy.
          *
          * The Next router tokens are repeated because this replaces rather than
          * extends Next's value. Assets, API routes and framework internals are
