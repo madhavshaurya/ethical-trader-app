@@ -60,6 +60,46 @@ To launch **TheEthicalTrader** in production, you must configure these variables
 
 ---
 
+## Agent & Crawler Interface
+
+The site is built to be readable by AI agents and crawlers, not just browsers.
+
+| Endpoint | What it serves |
+| :--- | :--- |
+| `/llms.txt` | [llmstxt.org](https://llmstxt.org) index of every page, with explicit *when to use this site* guidance |
+| `/llms-full.txt` | The whole site plus the full education curriculum as one Markdown document |
+| `/sitemap.xml` | Every indexable URL |
+| `/robots.txt` | Crawl rules (`/api/*` disallowed) |
+
+**Markdown content negotiation** ([acceptmarkdown.com](https://acceptmarkdown.com)): every page route serves
+Markdown from its own URL when the request carries `Accept: text/markdown`, and HTML otherwise.
+`Vary: Accept` is set so a CDN cannot cross-serve the two variants, and a request that accepts
+neither representation is answered with `406`.
+
+```bash
+curl -s -H "Accept: text/markdown" https://theethicaltrader.in/account-management
+curl -s -o /dev/null -w "%{http_code}" https://theethicaltrader.in/no-such-page   # 404
+```
+
+Negotiation lives in `src/proxy.ts`; the Markdown itself is assembled in `src/lib/agent-docs.ts`
+from the same constants the pages render from, so an agent can never be quoted a price or a
+managed-account term the page does not show.
+
+---
+
+## Tests
+
+```bash
+npm test
+```
+
+Vitest covers Accept-header negotiation and q-values, every proxy response path (Markdown, HTML,
+`406`, `404`, HEAD, rate limiting), the Markdown registry and its drift guards against
+`lib/constants`, `lib/blog-data` and the legal content, the llms.txt format, the Organization
+JSON-LD, and the server-rendered heading structure of the home page.
+
+---
+
 ## Institutional Security
 Your platform is protected by an **active middleware proxy** (`src/proxy.ts`):
 *   **XSS Protection:** Strict-type blocking and "nosniff" enforcement.

@@ -1,7 +1,8 @@
 'use client';
 
 import { useEducationStore } from '@/lib/educationStore';
-import { LESSONS, COLOR_MAP } from '@/components/home/Education';
+import { LESSONS } from '@/lib/education-content';
+import { COLOR_MAP } from '@/components/home/Education';
 
 export default function EducationModal() {
   const { activeLessonId, setActiveLessonId } = useEducationStore();

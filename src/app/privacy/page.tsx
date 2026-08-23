@@ -1,5 +1,7 @@
 import { Metadata } from 'next';
 import { pageOpenGraph } from '@/lib/site';
+import { SITE_CONFIG } from '@/lib/constants';
+import { PRIVACY_LAST_UPDATED, PRIVACY_SECTIONS } from '@/lib/legal-content';
 
 export const metadata: Metadata = {
   title: 'Privacy Policy | The Ethical Trader Data Protection',
@@ -23,37 +25,18 @@ export default function PrivacyPage() {
         </h1>
         
         <div className="space-y-10 text-[0.95rem]">
-          <section>
-            <h2 className="text-ivory font-bold text-[1.1rem] mb-4 uppercase tracking-widest">1. Introduction</h2>
-            <p>
-              Welcome to The Ethical Trader. We value your privacy and the protection of your personal data. This policy outlines how we handle information obtained through our website and services.
-            </p>
-          </section>
-          
-          <section>
-            <h2 className="text-ivory font-bold text-[1.1rem] mb-4 uppercase tracking-widest">2. Information Collection</h2>
-            <p>
-              We collect information that you provide directly to us, such as when you create an account, subscribe to our newsletter, or contact us for support. This may include your name, email address, and payment information.
-            </p>
-          </section>
-          
-          <section>
-            <h2 className="text-ivory font-bold text-[1.1rem] mb-4 uppercase tracking-widest">3. Use of Data</h2>
-            <p>
-              Your data is used to provide and maintain our services, notify you about changes, and provide customer support. We do not sell your personal data to third parties.
-            </p>
-          </section>
-          
-          <section>
-            <h2 className="text-ivory font-bold text-[1.1rem] mb-4 uppercase tracking-widest">4. Security</h2>
-            <p>
-              The security of your data is important to us, but remember that no method of transmission over the Internet, or method of electronic storage is 100% secure. We strive to use commercially acceptable means to protect your personal data.
-            </p>
-          </section>
-          
+          {PRIVACY_SECTIONS.map((section) => (
+            <section key={section.heading}>
+              <h2 className="text-ivory font-bold text-[1.1rem] mb-4 uppercase tracking-widest">{section.heading}</h2>
+              <p>
+                {section.body}
+              </p>
+            </section>
+          ))}
+
           <div className="pt-10 border-t border-border-subtle mt-16">
             <p className="text-stone italic text-[0.8rem]">
-              Last Updated: March 19, 2026. For questions regarding this policy, please contact support@theethicaltrader.in.
+              Last Updated: {PRIVACY_LAST_UPDATED}. For questions regarding this policy, please contact {SITE_CONFIG.links.supportEmail}.
             </p>
           </div>
         </div>

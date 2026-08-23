@@ -2,6 +2,7 @@ import { Metadata } from 'next';
 import Link from 'next/link';
 import { pageOpenGraph } from '@/lib/site';
 import { SITE_CONFIG, ACCOUNT_MANAGEMENT } from '@/lib/constants';
+import { TERMS_LAST_UPDATED, TERMS_SECTIONS } from '@/lib/legal-content';
 
 export const metadata: Metadata = {
   title: 'Terms of Service | The Ethical Trader',
@@ -18,30 +19,9 @@ export const metadata: Metadata = {
   }),
 };
 
-const LAST_UPDATED = '19 August 2026';
 
 const { minCapital, riskOnCapital, payoutCycle, profitSplit, indicativeReturns, disclaimer } =
   ACCOUNT_MANAGEMENT;
-
-const SECTIONS = [
-  { id: 'acceptance', n: '01', title: 'Acceptance of These Terms' },
-  { id: 'what-we-are', n: '02', title: 'What This Service Is — and Is Not' },
-  { id: 'regulatory', n: '03', title: 'Regulatory Status' },
-  { id: 'risk', n: '04', title: 'Risk Disclosure' },
-  { id: 'eligibility', n: '05', title: 'Eligibility' },
-  { id: 'subscriptions', n: '06', title: 'Subscriptions and Payment' },
-  { id: 'managed-accounts', n: '07', title: 'Account Handling Management' },
-  { id: 'market-data', n: '08', title: 'Market Data and Third-Party Sources' },
-  { id: 'ai', n: '09', title: 'AI Assistant and Signal Engine' },
-  { id: 'acceptable-use', n: '10', title: 'Acceptable Use' },
-  { id: 'ip', n: '11', title: 'Intellectual Property' },
-  { id: 'liability', n: '12', title: 'Limitation of Liability' },
-  { id: 'indemnity', n: '13', title: 'Indemnity' },
-  { id: 'termination', n: '14', title: 'Termination' },
-  { id: 'changes', n: '15', title: 'Changes to These Terms' },
-  { id: 'law', n: '16', title: 'Governing Law and Jurisdiction' },
-  { id: 'contact', n: '17', title: 'Contact' },
-];
 
 function Section({
   id,
@@ -88,7 +68,7 @@ export default function TermsPage() {
         </p>
 
         <p className="font-mono text-[0.7rem] tracking-[0.15em] uppercase text-stone mb-10">
-          Last updated: {LAST_UPDATED}
+          Last updated: {TERMS_LAST_UPDATED}
         </p>
 
         {/* The single most important disclosure on the site, stated before anything else. */}
@@ -113,7 +93,7 @@ export default function TermsPage() {
             Contents
           </div>
           <ol className="list-none grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-2">
-            {SECTIONS.map((s) => (
+            {TERMS_SECTIONS.map((s) => (
               <li key={s.id} className="flex items-baseline gap-3 text-[0.85rem]">
                 <span className="font-mono text-[0.65rem] text-stone shrink-0">{s.n}</span>
                 <a
