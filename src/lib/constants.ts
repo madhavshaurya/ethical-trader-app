@@ -87,3 +87,30 @@ export const PRICING_PLANS = [
 export function perDayUsd(priceUsd: number): string {
   return (priceUsd / 30).toFixed(2);
 }
+
+/**
+ * Business identity published as Organization JSON-LD.
+ *
+ * AI assistants and search engines read this to verify who is behind the site and to
+ * answer "how do I contact them" questions, so it must stay factual.
+ *
+ * `address` deliberately carries only what the site already states publicly: the
+ * business operates from India (INR pricing, Indian securities-law disclosures, en-IN
+ * locale, .in domain). Street, locality, region and postal code are left empty because
+ * nothing published on the site establishes them — fill them in with the registered
+ * business address and they will appear in the structured data automatically. An empty
+ * string is omitted rather than emitted as a blank field.
+ */
+export const ORGANIZATION = {
+  legalName: "The Ethical Trader",
+  /** ISO 3166-1 alpha-2. */
+  addressCountry: "IN",
+  streetAddress: "",
+  addressLocality: "",
+  addressRegion: "",
+  postalCode: "",
+  /** Published support address; also used as the Organization contactPoint email. */
+  email: SITE_CONFIG.links.supportEmail,
+  contactType: "customer support",
+  availableLanguage: ["en"],
+} as const;

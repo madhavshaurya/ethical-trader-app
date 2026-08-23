@@ -6,8 +6,8 @@ import EducationModal from '@/components/home/EducationModal';
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Analytics } from "@vercel/analytics/next";
 import { Metadata } from 'next';
-import { SITE_URL, SITE_NAME, SITE_LOCALE, absoluteUrl } from '@/lib/site';
-import { SITE_CONFIG } from '@/lib/constants';
+import { SITE_URL, SITE_NAME, SITE_LOCALE } from '@/lib/site';
+import { buildSiteJsonLd } from '@/lib/structured-data';
 import './globals.css';
 
 export const metadata: Metadata = {
@@ -61,43 +61,10 @@ export const metadata: Metadata = {
 };
 
 /**
- * Organization + WebSite structured data.
- *
- * The previous markup declared an EducationalOrganization with a hardcoded $149
- * Offer. Offer markup asserts a machine-readable price and availability, which
- * Google can surface as a rich result and hold to account, so pricing is left out
- * of structured data entirely and stays on the pricing section where it is managed.
+ * Organization + WebSite structured data, built in lib/structured-data so it can be
+ * covered by tests.
  */
-const jsonLd = {
-  '@context': 'https://schema.org',
-  '@graph': [
-    {
-      '@type': 'Organization',
-      '@id': `${SITE_URL}/#organization`,
-      name: SITE_NAME,
-      url: SITE_URL,
-      description: 'Trading education and market intelligence covering ICT, Smart Money Concepts and order flow.',
-      logo: {
-        '@type': 'ImageObject',
-        url: absoluteUrl('/icon.png'),
-      },
-      sameAs: [SITE_CONFIG.links.telegram],
-      contactPoint: {
-        '@type': 'ContactPoint',
-        contactType: 'customer support',
-        url: absoluteUrl('/contact'),
-      },
-    },
-    {
-      '@type': 'WebSite',
-      '@id': `${SITE_URL}/#website`,
-      name: SITE_NAME,
-      url: SITE_URL,
-      publisher: { '@id': `${SITE_URL}/#organization` },
-      inLanguage: 'en-IN',
-    },
-  ],
-};
+const jsonLd = buildSiteJsonLd();
 
 export default function RootLayout({
   children,
@@ -108,6 +75,9 @@ export default function RootLayout({
     <html lang="en-IN" suppressHydrationWarning>
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
+        {/* Discovery hint for agents: the same URLs also serve Markdown via
+            `Accept: text/markdown`, and /llms.txt indexes the whole site. */}
+        <link rel="alternate" type="text/markdown" href="/llms.txt" title="llms.txt" />
         <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;0,700;1,300;1,400;1,600;1,700&family=Cabinet+Grotesk:wght@300;400;500;700;800&family=Fira+Code:wght@300;400;500&display=swap" rel="stylesheet" />
         <link href="https://api.fontshare.com/v2/css?f[]=cabinet-grotesk@300,400,500,700,800&display=swap" rel="stylesheet" />
         <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=block" />

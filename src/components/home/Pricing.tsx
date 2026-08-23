@@ -46,9 +46,9 @@ export default function Pricing() {
                 {plan.kicker}
               </div>
 
-              <div className="font-serif text-[1.5rem] md:text-[1.65rem] font-normal text-ivory leading-tight mb-7">
+              <h3 className="font-serif text-[1.5rem] md:text-[1.65rem] font-normal text-ivory leading-tight mb-7">
                 {plan.name}
-              </div>
+              </h3>
 
               <div className="flex flex-col items-center mb-8">
                 <div className="text-[0.55rem] font-bold tracking-[0.28em] uppercase text-stone mb-2">
