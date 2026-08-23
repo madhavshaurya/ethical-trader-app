@@ -67,11 +67,14 @@ const MARKDOWN_TYPES = new Set(['text/markdown', 'text/x-markdown', 'text/plain'
  * Markdown whichever variant happened to be cached first. The Next router tokens are
  * repeated because this replaces rather than extends any value set downstream.
  *
- * This is authoritative on the Markdown responses returned from here. On the HTML
- * variant, Next's App Router page handler overwrites Vary with its own value after
- * the proxy runs, so that case is covered by `headers()` in next.config.ts, which the
- * edge applies afterwards. Setting it here too costs nothing and keeps the header
- * correct on hosts that merge proxy headers last.
+ * This is authoritative on the Markdown responses returned from here, which is the
+ * variant that matters: they are produced by the proxy and go out with it intact.
+ *
+ * It does not stick to rendered App Router pages. Next's page handler overwrites Vary
+ * unconditionally after the proxy runs, and `headers()` in next.config.ts runs before
+ * the function so it cannot win either — see the note there. Harmless, because the
+ * proxy runs ahead of the CDN cache lookup, so a cached HTML variant can never be
+ * handed to a client that asked for Markdown.
  */
 const VARY =
   'Accept, Accept-Encoding, RSC, Next-Router-State-Tree, Next-Router-Prefetch, Next-Router-Segment-Prefetch';

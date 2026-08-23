@@ -73,8 +73,9 @@ The site is built to be readable by AI agents and crawlers, not just browsers.
 
 **Markdown content negotiation** ([acceptmarkdown.com](https://acceptmarkdown.com)): every page route serves
 Markdown from its own URL when the request carries `Accept: text/markdown`, and HTML otherwise.
-`Vary: Accept` is set so a CDN cannot cross-serve the two variants, and a request that accepts
-neither representation is answered with `406`.
+Markdown responses carry `Vary: Accept`, and a request that accepts neither representation is
+answered with `406`. Negotiation happens in the proxy, which runs ahead of the CDN cache lookup,
+so a cached HTML variant is never handed to a client that asked for Markdown.
 
 ```bash
 curl -s -H "Accept: text/markdown" https://theethicaltrader.in/account-management
