@@ -337,7 +337,7 @@ const aboutDoc = buildDoc({
   title: 'Trading with Uncompromising Integrity',
   description: `The mission and philosophy behind ${SITE_CONFIG.name}: integrity-first trading education built on ICT, Smart Money Concepts and order flow.`,
   sections: [
-    'At The Ethical Trader, we believe that the financial markets are not just a place for profit, but a arena for discipline, character, and continuous growth. Our platform was born from a simple observation: most traders fail not because they lack data, but because they lack a systematic, ethical framework for risk.',
+    'At The Ethical Trader, we believe that the financial markets are not just a place for profit, but an arena for discipline, character, and continuous growth. Our platform has been created by market observation over time and through experience: most traders fail not because they lack data, but because they lack a systematic, ethical framework for risk.',
     [
       '## The "Ethical" in Trading',
       '',

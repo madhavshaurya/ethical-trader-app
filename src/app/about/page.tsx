@@ -31,7 +31,7 @@ export default function AboutPage() {
         
         <div className="space-y-8 text-parchment leading-[1.8] text-[1.05rem]">
           <p>
-            At The Ethical Trader, we believe that the financial markets are not just a place for profit, but a arena for discipline, character, and continuous growth. Our platform was born from a simple observation: most traders fail not because they lack data, but because they lack a systematic, ethical framework for risk.
+            At The Ethical Trader, we believe that the financial markets are not just a place for profit, but an arena for discipline, character, and continuous growth. Our platform has been created by market observation over time and through experience: most traders fail not because they lack data, but because they lack a systematic, ethical framework for risk.
           </p>
           
           <h2 className="font-serif text-[1.8rem] text-ivory font-light mt-12 mb-6">The "Ethical" in Trading</h2>
