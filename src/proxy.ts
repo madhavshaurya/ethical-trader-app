@@ -17,12 +17,11 @@ import { absoluteUrl } from '@/lib/site';
 
 const rateLimitMap = new Map<string, { count: number; lastReset: number }>();
 
-function isRateLimited(ip: string) {
+function isRateLimited(ip: string, maxRequests = 60, windowMs = 60 * 1000) {
   const now = Date.now();
-  const windowMs = 60 * 1000; // 1 minute window
-  const maxRequests = 10; // 10 requests per minute per IP
+  const key = `${ip}:${maxRequests}`;
 
-  const record = rateLimitMap.get(ip) || { count: 0, lastReset: now };
+  const record = rateLimitMap.get(key) || { count: 0, lastReset: now };
 
   if (now - record.lastReset > windowMs) {
     record.count = 1;
@@ -31,7 +30,7 @@ function isRateLimited(ip: string) {
     record.count++;
   }
 
-  rateLimitMap.set(ip, record);
+  rateLimitMap.set(key, record);
   return record.count > maxRequests;
 }
 
@@ -191,12 +190,15 @@ export function proxy(request: NextRequest) {
   const ip = forwarded ? forwarded.split(',')[0] : '127.0.0.1';
   const pathname = normalisePath(request.nextUrl.pathname);
 
-  // 1. API RATE LIMITING (Targeting Chat API)
-  if (pathname.startsWith('/api/chat')) {
-    if (isRateLimited(ip)) {
+  // 1. API RATE LIMITING (Mitigating DoS / abuse across all API endpoints)
+  if (pathname.startsWith('/api/')) {
+    // Chat endpoint is resource-heavy (LLM calls), so strict rate limit (10 req/min).
+    // General API routes (market data proxies) have a 60 req/min limit.
+    const maxRequests = pathname.startsWith('/api/chat') ? 10 : 60;
+    if (isRateLimited(ip, maxRequests)) {
       return withSecurityHeaders(
         new NextResponse(
-          JSON.stringify({ error: 'Too many requests. Please take a breath and try again in a minute.' }),
+          JSON.stringify({ error: 'Too many requests. Please try again in a minute.' }),
           { status: 429, headers: { 'Content-Type': 'application/json' } }
         )
       );
