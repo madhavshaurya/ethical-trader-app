@@ -39,7 +39,8 @@ export default function Header() {
         {/* Dedicated Close Button inside the menu */}
         <button 
           onClick={() => setIsMenuOpen(false)}
-          className="absolute top-10 right-6 w-12 h-12 flex items-center justify-center bg-onyx/50 border border-border-subtle rounded-full text-gold-light hover:text-gold transition-all"
+          aria-label="Close navigation menu"
+          className="absolute top-10 right-6 w-12 h-12 flex items-center justify-center bg-onyx/50 border border-border-subtle rounded-full text-gold-light hover:text-gold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold"
         >
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <line x1="18" y1="6" x2="6" y2="18"></line>
@@ -114,8 +115,9 @@ export default function Header() {
             {/* Mobile Menu Button - Locked to top of all layers */}
             <button 
               onClick={() => setIsMenuOpen(!isMenuOpen)}
-              className="lg:hidden flex flex-col items-center justify-center gap-2 w-10 h-10 bg-onyx/50 border border-border-subtle rounded-md cursor-pointer z-[1200] relative"
-              aria-label="Toggle Menu"
+              className="lg:hidden flex flex-col items-center justify-center gap-2 w-10 h-10 bg-onyx/50 border border-border-subtle rounded-md cursor-pointer z-[1200] relative focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold"
+              aria-label="Toggle navigation menu"
+              aria-expanded={isMenuOpen}
             >
               <span className={`w-5 h-[1.5px] bg-gold-light transition-all duration-300 ${isMenuOpen ? 'rotate-45 translate-y-[4.5px]' : ''}`} />
               <span className={`w-5 h-[1.5px] bg-gold-light transition-all duration-300 ${isMenuOpen ? '-rotate-45 -translate-y-[4.5px]' : ''}`} />

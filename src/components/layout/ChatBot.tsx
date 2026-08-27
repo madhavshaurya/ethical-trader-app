@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { MessageSquare, X, Send, User, Bot, Loader2 } from 'lucide-react';
+import { MessageSquare, X, Send, Bot, Loader2 } from 'lucide-react';
 
 type Message = {
   role: 'user' | 'assistant';
@@ -97,7 +97,7 @@ export default function ChatBot() {
           });
         }
       }
-    } catch (err) {
+    } catch {
       setMessages((prev) => [...prev, { role: 'assistant', content: '⚠️ Failed to connect. Please check your network or API key.' }]);
     } finally {
       setIsLoading(false);
@@ -133,7 +133,8 @@ export default function ChatBot() {
               </div>
               <button 
                 onClick={() => setIsOpen(false)}
-                className="p-1 hover:bg-white/5 rounded-md text-stone transition-colors"
+                aria-label="Close chat"
+                className="p-1 hover:bg-white/5 rounded-md text-stone transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold"
               >
                 <X size={20} />
               </button>
@@ -176,12 +177,14 @@ export default function ChatBot() {
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 placeholder="Ask about trading strategies..."
+                aria-label="Ask about trading strategies"
                 className="flex-1 bg-void border border-border-subtle rounded-md px-3 py-2 text-[0.8rem] text-ivory placeholder:text-stone focus:outline-none focus:border-gold/50 transition-all"
               />
               <button 
                 type="submit" 
                 disabled={!input.trim() || isLoading}
-                className="w-10 h-10 bg-gold text-void rounded-md flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gold-light transition-all"
+                aria-label="Send message"
+                className="w-10 h-10 bg-gold text-void rounded-md flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gold-light transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold"
               >
                 <Send size={18} />
               </button>
@@ -194,7 +197,9 @@ export default function ChatBot() {
         whileHover={{ scale: 1.05 }}
         whileTap={{ scale: 0.95 }}
         onClick={() => setIsOpen(!isOpen)}
-        className="w-12 h-12 sm:w-14 sm:h-14 bg-gradient-to-br from-gold to-gold-deep rounded-full shadow-[0_4px_20px_rgba(201,149,42,0.4)] flex items-center justify-center text-void relative overflow-hidden group"
+        aria-label={isOpen ? 'Close AI Trader Assistant' : 'Open AI Trader Assistant'}
+        aria-expanded={isOpen}
+        className="w-12 h-12 sm:w-14 sm:h-14 bg-gradient-to-br from-gold to-gold-deep rounded-full shadow-[0_4px_20px_rgba(201,149,42,0.4)] flex items-center justify-center text-void relative overflow-hidden group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold focus-visible:ring-offset-2 focus-visible:ring-offset-void"
       >
         <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300" />
         <MessageSquare size={24} className="relative z-10" />
