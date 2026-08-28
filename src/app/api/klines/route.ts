@@ -1,14 +1,28 @@
 import { NextResponse } from 'next/server';
 
+const ALLOWED_SYMBOL_REGEX = /^[A-Za-z0-9_\-=.]{1,20}$/;
+const ALLOWED_INTERVALS = new Set(['1m', '5m', '15m', '1h', '4h', '1d']);
+
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const symbol = searchParams.get('symbol');
   const interval = searchParams.get('interval');
-  const limit = searchParams.get('limit') || '200';
+  const limitStr = searchParams.get('limit') || '200';
   
   if (!symbol || !interval) {
     return NextResponse.json({ error: 'Missing parameters' }, { status: 400 });
   }
+
+  // Security: strict input validation to prevent SSRF and resource exhaustion (DoS)
+  if (!ALLOWED_SYMBOL_REGEX.test(symbol) || !ALLOWED_INTERVALS.has(interval)) {
+    return NextResponse.json({ error: 'Invalid symbol or interval format' }, { status: 400 });
+  }
+
+  const limitNum = parseInt(limitStr, 10);
+  if (isNaN(limitNum) || limitNum < 1 || limitNum > 1000) {
+    return NextResponse.json({ error: 'Invalid limit parameter' }, { status: 400 });
+  }
+  const limit = String(limitNum);
 
   // Helper to map Binance symbols to Yahoo Finance symbols
   const getYahooSymbol = (binSymbol: string) => {
