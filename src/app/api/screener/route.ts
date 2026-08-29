@@ -1,4 +1,17 @@
 import { NextResponse } from 'next/server';
+import { z } from 'zod';
+
+const ScreenerRequestSchema = z.object({
+  market: z.enum(['crypto', 'india', 'forex', 'america']).optional().default('crypto'),
+  sortBy: z
+    .string()
+    .max(50)
+    .regex(/^[a-zA-Z0-9_.-]+$/)
+    .optional()
+    .default('volume'),
+  sortOrder: z.enum(['asc', 'desc']).optional().default('desc'),
+  search: z.string().max(50).optional().default(''),
+});
 
 /**
  * TradingView returns each row as a positional array matching this column order, so the
@@ -34,11 +47,21 @@ type Column = (typeof COLUMNS)[number];
 
 export async function POST(request: Request) {
   try {
-    const body = await request.json();
-    const market = body.market || 'crypto'; 
-    const sortBy = body.sortBy || 'volume';
-    const sortOrder = body.sortOrder || 'desc';
-    const search = body.search || '';
+    const body = await request.json().catch(() => ({}));
+
+    // Input Validation & Sanitization
+    const parseResult = ScreenerRequestSchema.safeParse(body);
+    if (!parseResult.success) {
+      return NextResponse.json(
+        { error: 'Invalid request payload', details: parseResult.error.issues },
+        { status: 400 }
+      );
+    }
+
+    const { market, sortBy, sortOrder, search } = parseResult.data;
+
+    // Sanitize search string for TradingView filter match (alphanumeric and spaces/dashes/dots)
+    const sanitizedSearch = search.replace(/[^a-zA-Z0-9 ._-]/g, '').trim();
     
     // Determine scanner route
     const tvMarketId = market === 'crypto' ? 'crypto' : market === 'india' ? 'india' : market === 'forex' ? 'forex' : 'america';
@@ -56,11 +79,11 @@ export async function POST(request: Request) {
 
     // If search is provided, we use TradingView's filter engine instead of just text
     // This is more reliable for finding specific tickers like MRF
-    if (search) {
+    if (sanitizedSearch) {
       filters.push({
         left: "name",
         operation: "match",
-        right: search.toUpperCase()
+        right: sanitizedSearch.toUpperCase()
       });
     }
 
