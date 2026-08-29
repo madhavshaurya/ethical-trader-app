@@ -28,10 +28,18 @@ const INTERVAL_MAP: Record<string, { yInterval: string, range: string }> = {
   '1d': { yInterval: '1d', range: '2y' },
 };
 
+// Security: Input validation regex for tickers/symbols (alphanumeric, spaces, colons, dots, hyphens, carets, equals; max 30 chars)
+const VALID_SYMBOL_REGEX = /^[a-zA-Z0-9\s:^.\-=]{1,30}$/;
+
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const symbol = searchParams.get('symbol') || '';
   const interval = searchParams.get('interval') || '15m';
+
+  // Security: Input validation to prevent SSRF/injection and malformed external requests
+  if (!symbol || !VALID_SYMBOL_REGEX.test(symbol) || symbol.includes('..') || !(interval in INTERVAL_MAP)) {
+    return NextResponse.json({ error: 'Invalid parameter format' }, { status: 400 });
+  }
   
   let ySymbol = SYMBOL_MAP[symbol] || symbol;
   
