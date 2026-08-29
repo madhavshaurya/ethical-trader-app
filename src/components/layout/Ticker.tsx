@@ -27,6 +27,16 @@ const TICKER_SYMBOLS = [
 
 const SOURCE_KEYS = new Set<string>(TICKER_SYMBOLS.map((s) => s.src));
 
+// Performance optimization: Pre-build constant-time map for decimal precision lookup
+// avoiding array `.find()` inside high-frequency polling handlers.
+const DECIMALS_MAP = new Map<string, number>(
+  TICKER_SYMBOLS.map((s) => [s.src, s.decimals])
+);
+
+// Performance optimization: Hoist static ticker items list outside component render
+// to eliminate unnecessary array allocations on every component render.
+const TICKER_ITEMS = [...TICKER_SYMBOLS, ...TICKER_SYMBOLS];
+
 // Memoized item to prevent layout jitter on non-changing elements
 const TickerItem = memo(({ sym, quote }: { sym: string; quote?: Quote }) => (
   <div className="flex items-center gap-2 px-7 border-r border-border-subtle shrink-0 h-full">
@@ -61,7 +71,7 @@ export default function Ticker() {
         const c = parseFloat(String(price));
         const chg = parseFloat(String(changePct));
         if (!Number.isFinite(c) || !Number.isFinite(chg)) return;
-        const decimals = TICKER_SYMBOLS.find((s) => s.src === key)!.decimals;
+        const decimals = DECIMALS_MAP.get(key) ?? 2;
         next[key] = {
           p:
             decimals === 5
@@ -109,12 +119,10 @@ export default function Ticker() {
     };
   }, []);
 
-  const items = [...TICKER_SYMBOLS, ...TICKER_SYMBOLS];
-
   return (
     <div className="fixed top-0 left-0 right-0 z-[901] h-8 bg-void border-b border-border-subtle overflow-hidden flex items-center">
       <div className="flex whitespace-nowrap animate-[ticker-run_50s_linear_infinite] font-mono text-[0.65rem] font-light tracking-[0.03em] will-change-transform">
-        {items.map((cfg, i) => (
+        {TICKER_ITEMS.map((cfg, i) => (
           <TickerItem key={`${cfg.sym}-${i}`} sym={cfg.sym} quote={quotes[cfg.src]} />
         ))}
       </div>
