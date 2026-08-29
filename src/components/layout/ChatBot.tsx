@@ -133,6 +133,7 @@ export default function ChatBot() {
               </div>
               <button 
                 onClick={() => setIsOpen(false)}
+                aria-label="Close chat window"
                 className="p-1 hover:bg-white/5 rounded-md text-stone transition-colors"
               >
                 <X size={20} />
@@ -194,6 +195,7 @@ export default function ChatBot() {
         whileHover={{ scale: 1.05 }}
         whileTap={{ scale: 0.95 }}
         onClick={() => setIsOpen(!isOpen)}
+        aria-label={isOpen ? 'Close AI assistant chat' : 'Open AI assistant chat'}
         className="w-12 h-12 sm:w-14 sm:h-14 bg-gradient-to-br from-gold to-gold-deep rounded-full shadow-[0_4px_20px_rgba(201,149,42,0.4)] flex items-center justify-center text-void relative overflow-hidden group"
       >
         <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300" />
