@@ -194,7 +194,7 @@ describe('404s', () => {
   });
 });
 
-describe('rate limiting is unchanged', () => {
+describe('rate limiting', () => {
   it('429s the chat API past the limit, with security headers intact', async () => {
     const headers = new Headers({ 'x-forwarded-for': '203.0.113.99' });
     const chat = () =>
@@ -205,6 +205,21 @@ describe('rate limiting is unchanged', () => {
     }
 
     const limited = await chat();
+    expect(limited.status).toBe(429);
+    expect(limited.headers.get('x-frame-options')).toBe('DENY');
+    await expect(limited.json()).resolves.toMatchObject({ error: expect.any(String) });
+  });
+
+  it('429s general API routes past the higher limit (60 req/min)', async () => {
+    const headers = new Headers({ 'x-forwarded-for': '203.0.113.100' });
+    const spot = () =>
+      proxy(new NextRequest(new URL('/api/spot', ORIGIN), { method: 'GET', headers }));
+
+    for (let i = 0; i < 60; i += 1) {
+      expect(isPassThrough(await spot())).toBe(true);
+    }
+
+    const limited = await spot();
     expect(limited.status).toBe(429);
     expect(limited.headers.get('x-frame-options')).toBe('DENY');
     await expect(limited.json()).resolves.toMatchObject({ error: expect.any(String) });
