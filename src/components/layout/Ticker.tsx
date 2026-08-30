@@ -33,6 +33,13 @@ const DECIMALS_MAP = new Map<string, number>(
   TICKER_SYMBOLS.map((s) => [s.src, s.decimals])
 );
 
+// Performance optimization: Instantiate static Intl.NumberFormat object once outside component
+// to avoid recreating formatter objects and parsing options on every 3-second polling update.
+const DECIMAL_2_FORMATTER = new Intl.NumberFormat(undefined, {
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2,
+});
+
 // Performance optimization: Hoist static ticker items list outside component render
 // to eliminate unnecessary array allocations on every component render.
 const TICKER_ITEMS = [...TICKER_SYMBOLS, ...TICKER_SYMBOLS];
@@ -76,7 +83,7 @@ export default function Ticker() {
           p:
             decimals === 5
               ? c.toFixed(5)
-              : c.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
+              : DECIMAL_2_FORMATTER.format(c),
           change: chg,
         };
       };
