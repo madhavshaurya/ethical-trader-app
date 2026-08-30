@@ -1,7 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import { renderToStaticMarkup } from 'react-dom/server';
 import Education from '@/components/home/Education';
+import EducationModal from '@/components/home/EducationModal';
 import IctSmc from '@/components/home/IctSmc';
+import { useEducationStore } from '@/lib/educationStore';
 import Pricing from '@/components/home/Pricing';
 import MarketPage from '@/components/markets/MarketPage';
 import NotFound from '@/app/not-found';
@@ -38,6 +40,16 @@ function textLength(html: string): number {
     .replace(/\s+/g, ' ')
     .trim().length;
 }
+
+describe('EducationModal component', () => {
+  it('renders modal dialog attributes and accessible close button when a lesson is active', () => {
+    const modalHtml = renderToStaticMarkup(<EducationModal lessonId="basics" />);
+    expect(modalHtml).toContain('role="dialog"');
+    expect(modalHtml).toContain('aria-modal="true"');
+    expect(modalHtml).toContain('aria-labelledby="education-modal-title"');
+    expect(modalHtml).toContain('aria-label="Close modal"');
+  });
+});
 
 describe('home page sections render meaningful HTML without JavaScript', () => {
   const educationHtml = renderToStaticMarkup(<Education />);
