@@ -16,6 +16,10 @@ const SYMBOL_LABELS: Record<string, string> = {
 
 const DEFAULT_SYMBOLS = '^NSEI,^BSESN,^GSPC,ES=F,NQ=F,DX-Y.NYB,AAPL,TSLA,RELIANCE.NS';
 
+// Security: Input validation regex & request quantity limits to prevent SSRF and Resource Exhaustion (DoS)
+const VALID_SYMBOL_REGEX = /^[a-zA-Z0-9:^.\-=]{1,30}$/;
+const MAX_SYMBOLS = 20;
+
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const rawSymbols = searchParams.get('symbols');
@@ -38,6 +42,16 @@ export async function GET(request: Request) {
     .split(',')
     .map((s) => s.trim())
     .filter(Boolean);
+
+  if (list.length > MAX_SYMBOLS) {
+    return NextResponse.json({ error: 'Too many symbols requested' }, { status: 400 });
+  }
+
+  for (const sym of list) {
+    if (!VALID_SYMBOL_REGEX.test(sym) || sym.includes('..')) {
+      return NextResponse.json({ error: 'Invalid symbol format' }, { status: 400 });
+    }
+  }
 
   try {
     // One daily-bar request per symbol. The previous batch endpoint (v7/spark) only
