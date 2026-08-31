@@ -1,4 +1,12 @@
 import { NextResponse } from 'next/server';
+import { z } from 'zod';
+
+const ScreenerRequestSchema = z.object({
+  market: z.enum(['crypto', 'india', 'forex', 'america']).optional().default('crypto'),
+  sortBy: z.string().regex(/^[a-zA-Z0-9_.]{1,50}$/).optional().default('volume'),
+  sortOrder: z.enum(['asc', 'desc']).optional().default('desc'),
+  search: z.string().max(50).regex(/^[a-zA-Z0-9\s.\-]*$/).optional().default(''),
+});
 
 /**
  * TradingView returns each row as a positional array matching this column order, so the
@@ -34,11 +42,16 @@ type Column = (typeof COLUMNS)[number];
 
 export async function POST(request: Request) {
   try {
-    const body = await request.json();
-    const market = body.market || 'crypto'; 
-    const sortBy = body.sortBy || 'volume';
-    const sortOrder = body.sortOrder || 'desc';
-    const search = body.search || '';
+    const body = await request.json().catch(() => ({}));
+    const parseResult = ScreenerRequestSchema.safeParse(body);
+    if (!parseResult.success) {
+      return NextResponse.json(
+        { error: 'Invalid request format', details: parseResult.error.issues },
+        { status: 400 }
+      );
+    }
+
+    const { market, sortBy, sortOrder, search } = parseResult.data;
     
     // Determine scanner route
     const tvMarketId = market === 'crypto' ? 'crypto' : market === 'india' ? 'india' : market === 'forex' ? 'forex' : 'america';
