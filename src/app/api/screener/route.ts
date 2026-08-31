@@ -32,6 +32,13 @@ const COLUMNS = [
 
 type Column = (typeof COLUMNS)[number];
 
+// Performance optimization: Pre-build constant-time map for column index lookup,
+// eliminating repeated O(N) array `.indexOf()` calls (1,600+ lookups per request for 100 items)
+// inside high-frequency response mapping loops.
+const COLUMN_INDEX = Object.fromEntries(
+  COLUMNS.map((col, idx) => [col, idx])
+) as Record<Column, number>;
+
 export async function POST(request: Request) {
   try {
     const body = await request.json();
@@ -45,7 +52,7 @@ export async function POST(request: Request) {
     const url = `https://scanner.tradingview.com/${tvMarketId}/scan`;
 
     // Base filters
-    const filters: any[] = [];
+    const filters: Record<string, unknown>[] = [];
     
     // Add exchange filters
     if (market === 'india') {
@@ -91,9 +98,9 @@ export async function POST(request: Request) {
        return NextResponse.json({ totalCount: 0, data: [] });
     }
 
-    const results = data.data.map((item: any) => {
+    const results = data.data.map((item: { s: string; d?: unknown[] }) => {
       const row: unknown[] = item.d ?? [];
-      const at = (column: Column) => row[COLUMNS.indexOf(column)];
+      const at = (column: Column) => row[COLUMN_INDEX[column]];
 
       return {
         providerSymbol: item.s,
