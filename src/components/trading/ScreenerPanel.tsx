@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 
 interface ScreenerData {
@@ -78,13 +78,19 @@ export default function ScreenerPanel() {
     return { text: 'Neutral', color: 'text-stone' };
   };
 
-  const filteredData = data.filter(d => {
-    const symbolText = (d.name || '').toString().toLowerCase();
-    const descriptionText = (d.description || '').toString().toLowerCase();
+  // Performance optimization: Memoize filtered stock/market items array to avoid re-filtering
+  // and performing repeated string lowercasing / allocations on every UI render (e.g. indicator toggles, dropdowns).
+  const filteredData = useMemo(() => {
     const searchText = (search || '').toLowerCase();
+    if (!searchText) return data;
     
-    return symbolText.includes(searchText) || descriptionText.includes(searchText);
-  });
+    return data.filter(d => {
+      const symbolText = (d.name || '').toString().toLowerCase();
+      const descriptionText = (d.description || '').toString().toLowerCase();
+
+      return symbolText.includes(searchText) || descriptionText.includes(searchText);
+    });
+  }, [data, search]);
 
   const [isIndicatorsOpen, setIsIndicatorsOpen] = useState(false);
   const [activeFilter, setActiveFilter] = useState('Volume');
