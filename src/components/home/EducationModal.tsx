@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect } from 'react';
 import { useEducationStore } from '@/lib/educationStore';
 import { LESSONS } from '@/lib/education-content';
 import { COLOR_MAP } from '@/components/home/Education';
@@ -8,12 +9,28 @@ export default function EducationModal() {
   const { activeLessonId, setActiveLessonId } = useEducationStore();
   const activeLesson = activeLessonId ? LESSONS[activeLessonId] : null;
 
+  useEffect(() => {
+    if (!activeLesson) return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setActiveLessonId(null);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [activeLesson, setActiveLessonId]);
+
   if (!activeLesson) return null;
 
   return (
     <div 
       className="fixed inset-0 z-[2147483647] flex items-start justify-center p-4 md:p-10 pt-[120px] bg-void/95 backdrop-blur-md transition-opacity overflow-y-auto"
       onClick={() => setActiveLessonId(null)}
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="education-modal-title"
     >
       <div 
         className="bg-onyx border border-border-mid rounded-xl w-full max-w-[720px] my-auto flex flex-col relative shadow-[0_40px_100px_rgba(0,0,0,0.95)] animate-[fade-up_0.3s_ease_out] before:content-[''] before:absolute before:top-0 before:left-0 before:right-0 before:h-[2px] before:bg-gradient-to-r before:from-[#c9952a] before:via-[#e6c27a] before:to-[#c9952a] before:rounded-t-xl"
@@ -23,6 +40,7 @@ export default function EducationModal() {
         <div className="flex-none p-5 md:p-8 pb-5 border-b border-border-subtle relative bg-carbon rounded-t-xl pr-14 md:pr-16">
           <button 
             onClick={() => setActiveLessonId(null)} 
+            aria-label="Close lesson modal"
             className="absolute top-5 right-5 md:top-6 md:right-6 w-8 h-8 flex items-center justify-center text-stone hover:text-ivory bg-void rounded-full border border-border-subtle hover:border-gold-mid transition-colors text-[0.8rem]"
           >
             ✕
@@ -32,7 +50,7 @@ export default function EducationModal() {
               {activeLesson.badge}
             </span>
           </div>
-          <h2 className="font-serif text-xl md:text-[1.8rem] font-semibold text-ivory leading-tight">{activeLesson.title}</h2>
+          <h2 id="education-modal-title" className="font-serif text-xl md:text-[1.8rem] font-semibold text-ivory leading-tight">{activeLesson.title}</h2>
         </div>
         
         {/* Modal Body with injected HTML */}
