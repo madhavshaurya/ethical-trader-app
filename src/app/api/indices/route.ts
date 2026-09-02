@@ -16,6 +16,10 @@ const SYMBOL_LABELS: Record<string, string> = {
 
 const DEFAULT_SYMBOLS = '^NSEI,^BSESN,^GSPC,ES=F,NQ=F,DX-Y.NYB,AAPL,TSLA,RELIANCE.NS';
 
+// Security: Validate symbol format and cap quantity to prevent SSRF and DoS (resource exhaustion)
+const VALID_SYMBOL_REGEX = /^[a-zA-Z0-9\s:^.\-=]{1,30}$/;
+const MAX_SYMBOLS = 20;
+
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const rawSymbols = searchParams.get('symbols');
@@ -25,11 +29,12 @@ export async function GET(request: Request) {
   // Handle dynamically appended queries from the frontend that have prefixes
   if (rawSymbols) {
     const parsed = rawSymbols.split(',').map((s) => {
-      if (s.startsWith('NSE:')) return s.split(':')[1] + '.NS';
-      if (s.startsWith('BSE:')) return s.split(':')[1] + '.BO';
+      const trimmed = s.trim();
+      if (trimmed.startsWith('NSE:')) return trimmed.split(':')[1] + '.NS';
+      if (trimmed.startsWith('BSE:')) return trimmed.split(':')[1] + '.BO';
       // Auto-strip US Exchanges so Yahoo catches bare tickers (e.g. NASDAQ:AAPL -> AAPL)
-      if (s.includes(':')) return s.split(':')[1];
-      return s;
+      if (trimmed.includes(':')) return trimmed.split(':')[1];
+      return trimmed;
     });
     symbols = parsed.join(',');
   }
@@ -38,6 +43,16 @@ export async function GET(request: Request) {
     .split(',')
     .map((s) => s.trim())
     .filter(Boolean);
+
+  if (list.length > MAX_SYMBOLS) {
+    return NextResponse.json({ error: 'Too many symbols requested' }, { status: 400 });
+  }
+
+  for (const s of list) {
+    if (!VALID_SYMBOL_REGEX.test(s) || s.includes('..')) {
+      return NextResponse.json({ error: 'Invalid symbol parameter format' }, { status: 400 });
+    }
+  }
 
   try {
     // One daily-bar request per symbol. The previous batch endpoint (v7/spark) only
