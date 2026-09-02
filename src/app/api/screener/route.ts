@@ -32,6 +32,12 @@ const COLUMNS = [
 
 type Column = (typeof COLUMNS)[number];
 
+// Performance optimization: Pre-build constant-time lookup map for column indices
+// to avoid O(M) `COLUMNS.indexOf(column)` calls per record property (16 properties * 100 rows = 1,600 array traversals per request).
+const COLUMN_INDEX_MAP = new Map<Column, number>(
+  COLUMNS.map((col, idx) => [col, idx])
+);
+
 export async function POST(request: Request) {
   try {
     const body = await request.json();
@@ -93,7 +99,7 @@ export async function POST(request: Request) {
 
     const results = data.data.map((item: any) => {
       const row: unknown[] = item.d ?? [];
-      const at = (column: Column) => row[COLUMNS.indexOf(column)];
+      const at = (column: Column) => row[COLUMN_INDEX_MAP.get(column)!];
 
       return {
         providerSymbol: item.s,
