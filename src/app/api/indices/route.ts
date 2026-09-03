@@ -15,6 +15,8 @@ const SYMBOL_LABELS: Record<string, string> = {
 };
 
 const DEFAULT_SYMBOLS = '^NSEI,^BSESN,^GSPC,ES=F,NQ=F,DX-Y.NYB,AAPL,TSLA,RELIANCE.NS';
+const VALID_SYMBOL_REGEX = /^[a-zA-Z0-9\s:^.\-=]{1,30}$/;
+const MAX_SYMBOLS = 20;
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -38,6 +40,11 @@ export async function GET(request: Request) {
     .split(',')
     .map((s) => s.trim())
     .filter(Boolean);
+
+  // Security: Input validation to prevent request amplification / DoS and malformed requests
+  if (list.length > MAX_SYMBOLS || list.some((s) => !VALID_SYMBOL_REGEX.test(s) || s.includes('..'))) {
+    return NextResponse.json({ error: 'Invalid or excessive symbols parameter' }, { status: 400 });
+  }
 
   try {
     // One daily-bar request per symbol. The previous batch endpoint (v7/spark) only
