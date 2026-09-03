@@ -58,6 +58,13 @@ function LessonCard({ id, badge, title, desc, meta, color, hasPreview, onClick }
   const c = COLOR_MAP[color as keyof typeof COLOR_MAP];
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      onClick?.();
+    }
+  };
+
   useEffect(() => {
     if (!hasPreview || !canvasRef.current) return;
     
@@ -105,8 +112,12 @@ function LessonCard({ id, badge, title, desc, meta, color, hasPreview, onClick }
 
   return (
     <div 
+      role="button"
+      tabIndex={0}
       onClick={onClick}
-      className={`bg-onyx border border-border-subtle rounded-[10px] overflow-hidden cursor-pointer transition-all hover:border-border-mid hover:-translate-y-[6px] hover:shadow-[0_30px_80px_rgba(0,0,0,0.6)] relative group flex flex-col`}
+      onKeyDown={handleKeyDown}
+      aria-label={`Open lesson: ${title}`}
+      className={`bg-onyx border border-border-subtle rounded-[10px] overflow-hidden cursor-pointer transition-all hover:border-border-mid hover:-translate-y-[6px] hover:shadow-[0_30px_80px_rgba(0,0,0,0.6)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold focus-visible:ring-offset-2 focus-visible:ring-offset-void relative group flex flex-col`}
     >
       <div className="absolute top-0 left-0 right-0 h-[2px] bg-transparent group-hover:bg-gradient-to-r group-hover:from-gold group-hover:to-amber-mid transition-all z-10" />
       
