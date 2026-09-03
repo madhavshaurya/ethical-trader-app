@@ -14,6 +14,7 @@ import { fetchCandles } from '@/lib/candles';
  */
 
 const ALLOWED_INTERVALS = new Set(['1m', '5m', '15m', '1h', '4h', '1d']);
+const VALID_SYMBOL_REGEX = /^[a-zA-Z0-9_\-=.]{1,30}$/;
 
 type Direction = 'bullish' | 'bearish' | 'neutral';
 
@@ -33,6 +34,11 @@ export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const symbol = (searchParams.get('symbol') || 'XAUUSDT').toUpperCase();
   const interval = searchParams.get('interval') || '1h';
+
+  // Security: Input validation to prevent path traversal and malformed inputs
+  if (!VALID_SYMBOL_REGEX.test(symbol) || symbol.includes('..')) {
+    return NextResponse.json({ error: 'Invalid symbol format' }, { status: 400 });
+  }
 
   if (!ALLOWED_INTERVALS.has(interval)) {
     return NextResponse.json({ error: 'Unsupported interval' }, { status: 400 });
