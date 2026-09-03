@@ -26,8 +26,19 @@ interface ScreenerData {
 export default function ScreenerPanel() {
   const [activeTab, setActiveTab] = useState<'india' | 'america' | 'forex' | 'crypto'>('india');
   const [search, setSearch] = useState('');
+  // Performance optimization: Debounce search query to prevent hammering /api/screener
+  // and TradingView upstream API on every keystroke, avoiding network request thrashing
+  // and UI flicker.
+  const [debouncedSearch, setDebouncedSearch] = useState('');
   const [data, setData] = useState<ScreenerData[]>([]);
   const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(search);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [search]);
 
   useEffect(() => {
     let isMounted = true;
@@ -37,7 +48,7 @@ export default function ScreenerPanel() {
         const res = await fetch('/api/screener', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ market: activeTab, search, limit: 200 })
+          body: JSON.stringify({ market: activeTab, search: debouncedSearch, limit: 200 })
         });
         if (res.ok) {
           const json = await res.json();
@@ -58,7 +69,7 @@ export default function ScreenerPanel() {
       isMounted = false;
       clearInterval(interval);
     };
-  }, [activeTab, search]);
+  }, [activeTab, debouncedSearch]);
 
   const formatNumber = (num: number) => {
     if (!num) return '—';
