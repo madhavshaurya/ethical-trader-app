@@ -59,6 +59,15 @@ describe('home page sections render meaningful HTML without JavaScript', () => {
     for (const lesson of Object.values(LESSONS)) expect(h3s).toContain(lesson.title);
   });
 
+  it('renders education cards with accessible button roles and tabIndex', () => {
+    expect(educationHtml).toContain('role="button"');
+    expect(educationHtml).toContain('tabindex="0"');
+    const decodedHtml = decode(educationHtml);
+    for (const lesson of Object.values(LESSONS)) {
+      expect(decodedHtml).toContain(`aria-label="Open lesson: ${lesson.title}"`);
+    }
+  });
+
   it('titles every pricing plan as an H3', () => {
     const h3s = headings(pricingHtml, 3);
     for (const plan of PRICING_PLANS) expect(h3s).toContain(plan.name);
