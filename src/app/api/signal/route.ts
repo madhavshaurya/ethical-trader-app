@@ -13,6 +13,8 @@ import { fetchCandles } from '@/lib/candles';
  * Indicators come from `trading-signals` (MIT, zero runtime dependencies).
  */
 
+// Security: strict input validation regex for symbol parameters to prevent SSRF and injection
+const ALLOWED_SYMBOL_REGEX = /^[A-Za-z0-9_\-=.]{1,20}$/;
 const ALLOWED_INTERVALS = new Set(['1m', '5m', '15m', '1h', '4h', '1d']);
 
 type Direction = 'bullish' | 'bearish' | 'neutral';
@@ -34,8 +36,8 @@ export async function GET(request: Request) {
   const symbol = (searchParams.get('symbol') || 'XAUUSDT').toUpperCase();
   const interval = searchParams.get('interval') || '1h';
 
-  if (!ALLOWED_INTERVALS.has(interval)) {
-    return NextResponse.json({ error: 'Unsupported interval' }, { status: 400 });
+  if (!ALLOWED_SYMBOL_REGEX.test(symbol) || !ALLOWED_INTERVALS.has(interval)) {
+    return NextResponse.json({ error: 'Invalid symbol or interval format' }, { status: 400 });
   }
 
   const candles = await fetchCandles(symbol, interval, 200);
