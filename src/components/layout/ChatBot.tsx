@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { MessageSquare, X, Send, User, Bot, Loader2 } from 'lucide-react';
+import { MessageSquare, X, Send, Bot, Loader2 } from 'lucide-react';
 
 type Message = {
   role: 'user' | 'assistant';
@@ -97,7 +97,7 @@ export default function ChatBot() {
           });
         }
       }
-    } catch (err) {
+    } catch {
       setMessages((prev) => [...prev, { role: 'assistant', content: '⚠️ Failed to connect. Please check your network or API key.' }]);
     } finally {
       setIsLoading(false);
@@ -109,6 +109,9 @@ export default function ChatBot() {
       <AnimatePresence>
         {isOpen && (
           <motion.div
+            id="chat-dialog"
+            role="dialog"
+            aria-label="AI Trading Assistant"
             initial={{ opacity: 0, y: 30, scale: 0.9, transformOrigin: 'bottom right' }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 30, scale: 0.9 }}
@@ -161,8 +164,9 @@ export default function ChatBot() {
               ))}
               {isLoading && (
                 <div className="flex justify-start">
-                  <div className="bg-onyx/80 border border-border-subtle rounded-xl p-3">
+                  <div className="bg-onyx/80 border border-border-subtle rounded-xl p-3 flex items-center gap-2" role="status" aria-label="Thinking">
                     <Loader2 size={16} className="text-gold animate-spin" />
+                    <span className="sr-only">AI assistant is thinking...</span>
                   </div>
                 </div>
               )}
@@ -177,6 +181,7 @@ export default function ChatBot() {
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 placeholder="Ask about trading strategies..."
+                aria-label="Ask about trading strategies"
                 className="flex-1 bg-void border border-border-subtle rounded-md px-3 py-2 text-[0.8rem] text-ivory placeholder:text-stone focus:outline-none focus:border-gold/50 transition-all"
               />
               <button 
@@ -196,6 +201,9 @@ export default function ChatBot() {
         whileHover={{ scale: 1.05 }}
         whileTap={{ scale: 0.95 }}
         onClick={() => setIsOpen(!isOpen)}
+        aria-expanded={isOpen}
+        aria-controls="chat-dialog"
+        aria-haspopup="dialog"
         className="w-12 h-12 sm:w-14 sm:h-14 bg-gradient-to-br from-gold to-gold-deep rounded-full shadow-[0_4px_20px_rgba(201,149,42,0.4)] flex items-center justify-center text-void relative overflow-hidden group"
         aria-label={isOpen ? "Close AI assistant" : "Open AI assistant"}
       >
