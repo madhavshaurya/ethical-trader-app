@@ -32,6 +32,12 @@ const COLUMNS = [
 
 type Column = (typeof COLUMNS)[number];
 
+// Performance optimization: Pre-build O(1) column index map to eliminate
+// 1,600+ O(N) array `.indexOf()` lookups per screener API request.
+const COLUMN_INDEX_MAP = Object.fromEntries(
+  COLUMNS.map((col, idx) => [col, idx])
+) as Record<Column, number>;
+
 export async function POST(request: Request) {
   try {
     const body = await request.json();
@@ -93,7 +99,7 @@ export async function POST(request: Request) {
 
     const results = data.data.map((item: any) => {
       const row: unknown[] = item.d ?? [];
-      const at = (column: Column) => row[COLUMNS.indexOf(column)];
+      const at = (column: Column) => row[COLUMN_INDEX_MAP[column]];
 
       return {
         providerSymbol: item.s,
