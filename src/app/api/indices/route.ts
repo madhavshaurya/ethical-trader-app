@@ -16,9 +16,26 @@ const SYMBOL_LABELS: Record<string, string> = {
 
 const DEFAULT_SYMBOLS = '^NSEI,^BSESN,^GSPC,ES=F,NQ=F,DX-Y.NYB,AAPL,TSLA,RELIANCE.NS';
 
+// Security: Input validation regex and bounds to prevent SSRF and DoS via resource exhaustion
+const VALID_SYMBOL_REGEX = /^[a-zA-Z0-9\s:^.\-=]{1,30}$/;
+const MAX_RAW_SYMBOLS_LENGTH = 500;
+const MAX_SYMBOLS_COUNT = 20;
+
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const rawSymbols = searchParams.get('symbols');
+
+  // Security input validation on client-supplied symbols parameter
+  if (rawSymbols !== null) {
+    if (rawSymbols.length > MAX_RAW_SYMBOLS_LENGTH) {
+      return NextResponse.json({ error: 'Invalid symbol parameter' }, { status: 400 });
+    }
+
+    const items = rawSymbols.split(',').map((s) => s.trim()).filter(Boolean);
+    if (items.length > MAX_SYMBOLS_COUNT || items.some((s) => !VALID_SYMBOL_REGEX.test(s))) {
+      return NextResponse.json({ error: 'Invalid symbol parameter' }, { status: 400 });
+    }
+  }
 
   let symbols = rawSymbols || DEFAULT_SYMBOLS;
 
