@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, memo, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 
 interface WatchlistData {
@@ -54,6 +54,55 @@ function symbolMeta(sym: string): { venue: string; currency: string; alwaysOpen:
 
   return { venue: 'US Market', currency: 'USD', alwaysOpen: false };
 }
+
+function formatPrice(num: number, sym: string) {
+  if (!num) return '—';
+  if (sym === 'EURUSD' || sym === 'EURUSDT') return num.toFixed(5);
+  return num.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+// Performance optimization: Memoize WatchlistItem to prevent redundant re-renders
+// when live polling updates quotes for other symbols or when dropdown menus state changes.
+const WatchlistItem = memo(({
+  item,
+  isActive,
+  point,
+  onClick,
+}: {
+  item: { sym: string; name: string };
+  isActive: boolean;
+  point?: WatchlistData;
+  onClick: (sym: string) => void;
+}) => {
+  const isUp = point && point.chgPct >= 0;
+
+  return (
+    <div
+      onClick={() => onClick(item.sym)}
+      className={`flex items-center justify-between px-4 py-1.5 cursor-pointer text-xs transition-colors ${
+        isActive ? 'bg-[#2B354D] text-white' : 'hover:bg-[#2A2B2E] text-[#D1D4DC]'
+      }`}
+    >
+      <div className="flex items-center gap-2 w-[35%]">
+        <div className={`w-4 h-4 shrink-0 rounded-full flex items-center justify-center text-[8px] font-bold ${isActive ? 'bg-[#2962FF]' : 'bg-[#434651]'}`}>
+          {item.sym.charAt(0)}
+        </div>
+        <span className={`font-semibold text-[13px] truncate ${isActive ? 'text-white' : 'text-[#D1D4DC]'}`}>{item.sym}</span>
+      </div>
+
+      <div className="w-[22%] text-right font-mono text-[12px]">
+        {point ? formatPrice(point.last, item.sym) : '—'}
+      </div>
+      <div className={`w-[20%] text-right font-mono text-[12px] ${isUp ? 'text-[#089981]' : 'text-[#F23645]'}`}>
+        {point ? `${isUp ? '+' : ''}${point.chg.toFixed(2)}` : '—'}
+      </div>
+      <div className={`w-[23%] text-right font-mono text-[12px] font-semibold ${isUp ? 'text-[#089981]' : 'text-[#F23645]'}`}>
+        {point ? `${isUp ? '+' : ''}${point.chgPct.toFixed(2)}%` : '—'}
+      </div>
+    </div>
+  );
+});
+WatchlistItem.displayName = 'WatchlistItem';
 
 export default function WatchlistWidget({ activeSymbol }: { activeSymbol: string }) {
   const router = useRouter();
@@ -157,12 +206,6 @@ export default function WatchlistWidget({ activeSymbol }: { activeSymbol: string
     return () => { isMounted = false; clearInterval(interval); };
   }, [activeSymbol]);
 
-  const formatPrice = (num: number, sym: string) => {
-    if (!num) return '—';
-    if (sym === 'EURUSD' || sym === 'EURUSDT') return num.toFixed(5);
-    return num.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-  };
-
   const [watchlistType, setWatchlistType] = useState('Watchlist');
   const [isWlDropdownOpen, setIsWlDropdownOpen] = useState(false);
   const [isTuneOpen, setIsTuneOpen] = useState(false);
@@ -173,6 +216,10 @@ export default function WatchlistWidget({ activeSymbol }: { activeSymbol: string
       prev.includes(title) ? prev.filter(t => t !== title) : [...prev, title]
     );
   };
+
+  const handleItemClick = useCallback((sym: string) => {
+    router.push(`/live-terminal/${sym}`);
+  }, [router]);
 
   const renderGroup = (title: string, items: {sym: string, name: string}[]) => {
     const isCollapsed = collapsedGroups.includes(title);
@@ -191,39 +238,15 @@ export default function WatchlistWidget({ activeSymbol }: { activeSymbol: string
         </div>
         {!isCollapsed && (
           <div className="flex flex-col">
-            {items.map(item => {
-              const isActive = activeSymbol === item.sym;
-              const point = data[item.sym];
-              const isUp = point && point.chgPct >= 0;
-              
-              return (
-                <div 
-                  key={item.sym}
-                  onClick={() => router.push(`/live-terminal/${item.sym}`)}
-                  className={`flex items-center justify-between px-4 py-1.5 cursor-pointer text-xs transition-colors ${
-                    isActive ? 'bg-[#2B354D] text-white' : 'hover:bg-[#2A2B2E] text-[#D1D4DC]'
-                  }`}
-                >
-                  <div className="flex items-center gap-2 w-[35%]">
-                    {/* Fake icon to match TradingView */}
-                    <div className={`w-4 h-4 shrink-0 rounded-full flex items-center justify-center text-[8px] font-bold ${isActive ? 'bg-[#2962FF]' : 'bg-[#434651]'}`}>
-                      {item.sym.charAt(0)}
-                    </div>
-                    <span className={`font-semibold text-[13px] truncate ${isActive ? 'text-white' : 'text-[#D1D4DC]'}`}>{item.sym}</span>
-                  </div>
-                  
-                  <div className="w-[22%] text-right font-mono text-[12px]">
-                    {point ? formatPrice(point.last, item.sym) : '—'}
-                  </div>
-                  <div className={`w-[20%] text-right font-mono text-[12px] ${isUp ? 'text-[#089981]' : 'text-[#F23645]'}`}>
-                    {point ? `${isUp ? '+' : ''}${point.chg.toFixed(2)}` : '—'}
-                  </div>
-                  <div className={`w-[23%] text-right font-mono text-[12px] font-semibold ${isUp ? 'text-[#089981]' : 'text-[#F23645]'}`}>
-                    {point ? `${isUp ? '+' : ''}${point.chgPct.toFixed(2)}%` : '—'}
-                  </div>
-                </div>
-              );
-            })}
+            {items.map(item => (
+              <WatchlistItem
+                key={item.sym}
+                item={item}
+                isActive={activeSymbol === item.sym}
+                point={data[item.sym]}
+                onClick={handleItemClick}
+              />
+            ))}
           </div>
         )}
       </div>
